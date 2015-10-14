@@ -1,11 +1,13 @@
 gic its note
 ============
 
--v0.1 2015.9.5  Sherlock init
--v0.2 2015.9.8  Sherlock add v4.2 ITS analysis
--v0.3 2015.9.21 Sherlock add how to build up basic gic lpi
+-v0.1 2015.9.5   Sherlock init
+-v0.2 2015.9.8   Sherlock add v4.2 ITS analysis
+-v0.3 2015.9.21  Sherlock add how to build up basic gic lpi
+-v0.4 2015.10.14 Sherlock add different part number, add part 2
 
-struct its_device *its_create_device(struct its_node *its, u32 dev_id, int nvecs)
+1. current GIC ITS code in v4.2/v4.3
+------------------------------------
 
 /* this is the arch of interrupt sub-system */
 struct irq_desc
@@ -69,6 +71,30 @@ pci_its irq_domain                      platform_its irq_domain
 	    --> .msi_prepare                    --> .msi_prepare
 	--> .chip(its_msi_irq_chip)             --> .chip(its_pmsi_irq_chip)
 
+2. msi domain struct
+--------------------
+
+basic struct:
+
+struct msi_domain_info
+    --> struct msi_domain_ops
+        --> .msi_prepare
+    --> struct irq_chip
+        --> .irq_write_msi_msg
+
+pci_msi_create_irq_domain(device_node, msi_domain_info, parent)
+        /* core function */
+    --> msi_create_irq_domain(node, info, parent);
+            /* msi_domain_ops is irq_domain_ops in kernel/irq/msi.c
+             * info below will be stored in host_data of irq_domain
+             *
+             * both pci_its irq_domain and platform_its irq_domain use
+             * same msi_domain_ops, but different msi_domain_info
+             */
+        --> irq_domain_add_hierarchy(parent, 0, 0, node, &msi_domain_ops, info)
+
+3. pci msi struct 
+-----------------
 /* this is the work flow of PCI MSI */
 /* kernel/drivers/pci/msi.c */
 pci_msi_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
@@ -87,6 +113,9 @@ its_pci_msi_prepare
         /* in its irq_domain */
     --> its_msi_prepare
         --> its_create_device(its, dev_id, nvec);
+
+4. ITS hardware 
+---------------
 
 how to build up basic gic lpi:
 gic_of_init

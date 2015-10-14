@@ -113,6 +113,7 @@ a lot init configuration above: its, lpi, its_cpu
 some hardware table:
 --------------------
 its device table
+its ITT
 its collection table
 lpi pending table
 lpi configure table
@@ -142,7 +143,31 @@ its_cpu_init_lpis
     /* configure pend table pointer to register GICR_PENDBASER */
     --> writeq_relaxed(val, rbase + GICR_PENDBASER)
 
+/* its_node indicates a physical ITS hardware */
+struct its_node {
+	raw_spinlock_t		lock;
+	struct list_head	entry;
+	void __iomem		*base;
+	unsigned long		phys_base;
+	/* cmd_base, cmd_write are command queue pointers */
+	struct its_cmd_block	*cmd_base;
+	struct its_cmd_block	*cmd_write;
+	void			*tables[GITS_BASER_NR_REGS];
+	struct its_collection	*collections;
+	struct list_head	its_device_list;
+	u64			flags;
+	u32			ite_size;
+};
 
+/* its_device indicates a device which sends out MSI to an ITS */
+struct its_device {
+	struct list_head	entry;
+	struct its_node		*its;
+	struct event_lpi_map	event_map;
+	void			*itt;
+	u32			nr_ites;
+	u32			device_id;
+};
 
 
 

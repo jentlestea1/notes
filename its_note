@@ -95,16 +95,25 @@ pci_msi_create_irq_domain(device_node, msi_domain_info, parent)
 
 3. pci msi struct 
 -----------------
+
+in part 2, it creats related domain, then we will see how to use callbacks
+in above domain.
+
 /* this is the work flow of PCI MSI */
 /* kernel/drivers/pci/msi.c */
 pci_msi_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
         /* so this irq_domain is pci_its irq_domain ? */
     --> pci_msi_domain_alloc_irqs(domain, dev, nvec, type);
         --> msi_domain_alloc_irqs(domain, &dev->dev, nvec);
-	        /* should be its_pci_msi_prepare ? */
+	        /* should be its_pci_msi_prepare ?
+                 * if below function, first get dev_id, then call parent domain
+                 * msi_prepare which is its domain msi_prepare and will build
+                 * up device table of ITS.
+                 */
 	    --> ps->msi_prepare(domain, dev, nvec, &arg);
 	       /* domain, virq, desc->nvec_used, dev_to_node(dev), &arg, false */
 	    --> __irq_domain_alloc_irqs()
+
 
 /* details of how ITS work */
 /* in pci_msi irq_domain */

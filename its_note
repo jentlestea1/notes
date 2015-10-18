@@ -1,10 +1,12 @@
 gic its note
 ============
 
--v0.1 2015.9.5   Sherlock init
--v0.2 2015.9.8   Sherlock add v4.2 ITS analysis
--v0.3 2015.9.21  Sherlock add how to build up basic gic lpi
--v0.4 2015.10.14 Sherlock add different part number, add part 2
+-v0.1 2015.9.5	   Sherlock  init
+-v0.2 2015.9.8	   Sherlock  add v4.2 ITS analysis
+-v0.3 2015.9.21    Sherlock  add how to build up basic gic lpi
+-v0.4 2015.10.14   Sherlock  add different part number, add part 2
+-v0.5 2015.10.18   Sherlock  add .irq_write_msi_msg work flow analysis
+
 
 1. current GIC ITS code in v4.2/v4.3
 ------------------------------------
@@ -82,6 +84,10 @@ struct msi_domain_info
     --> struct irq_chip
         --> .irq_write_msi_msg
 
+msi related struct should be part of interrupt sub-system as showed in part 1.
+struct msi_domain_info will be stored in void *host_data of a irq_domain.
+
+/* will find below funtion in drvers/irqchip/irq-gic-v3-its-pci-msi.c */
 pci_msi_create_irq_domain(device_node, msi_domain_info, parent)
         /* core function */
     --> msi_create_irq_domain(node, info, parent);
@@ -89,7 +95,8 @@ pci_msi_create_irq_domain(device_node, msi_domain_info, parent)
              * info below will be stored in host_data of irq_domain
              *
              * both pci_its irq_domain and platform_its irq_domain use
-             * same msi_domain_ops, but different msi_domain_info
+             * same msi_domain_ops, but different msi_domain_info.
+             * above msi_domain_ops is a struct irq_domain_ops.
              */
         --> irq_domain_add_hierarchy(parent, 0, 0, node, &msi_domain_ops, info)
 
@@ -97,7 +104,7 @@ pci_msi_create_irq_domain(device_node, msi_domain_info, parent)
 -----------------
 
 in part 2, it creats related domain, then we will see how to use callbacks
-in above domain.
+in above domain. This part shows how to allocate irqs in a msi domain.
 
 /* this is the work flow of PCI MSI */
 /* kernel/drivers/pci/msi.c */
@@ -114,14 +121,43 @@ pci_msi_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
 	       /* domain, virq, desc->nvec_used, dev_to_node(dev), &arg, false */
 	    --> __irq_domain_alloc_irqs()
 
-
-/* details of how ITS work */
+/* details of how ITS work, this prepare function just allocat device table and
+ * related structure in ITS.
+ */
 /* in pci_msi irq_domain */
 its_pci_msi_prepare
     --> ... (get dev_ip)
         /* in its irq_domain */
     --> its_msi_prepare
         --> its_create_device(its, dev_id, nvec);
+
+/* there is an important point: how to configure MSI capability registers of one
+ * PCI device, this action takes place in irq_write_msi_msg mentioned in part 2's
+ * "basic struct". how to call this function ? obviouly, this function is stored
+ * in msi_domain_info, so we must use some msi layer function to access this
+ * function to interrup sub-system, in fact, it uses msi_domain_ops to do this.
+ */
+/* it stored irq_chip in msi_domain_info to interrupt sub-system in 
+ * pci_msi_create_irq_domain, details as below:
+ */
+pci_msi_create_irq_domain
+    --> msi_create_irq_domain
+        -->  msi_domain_update_dom_ops
+                 /* (struct msi_domain_ops msi_domain_ops_default -->
+                  * msi_domain_ops_init
+                  */
+             --> ops->msi_init = msi_domain_ops_default.msi_init;
+                     /* para: domain, virq, hwirq, info->chip, info->chip_data */
+                 --> irq_domain_set_hwirq_and_chip
+
+in function request_irq, it will call .active in irq_domain struct, here is will
+call function msi_domain_activate in struct irq_domain_ops msi_domain_ops.
+request_irq
+    ...
+    --> msi_domain_activate
+        --> irq_chip_write_msi_msg
+                /* here is irq_write_msi_msg in struct msi_domain_info */
+            --> data->chip->irq_write_msi_msg(data, msg);
 
 4. ITS hardware 
 ---------------

@@ -14,7 +14,7 @@ let's assume dpc_probe will be called for any port type, then the flow of probe:
     --> INIT_WORK(&dpc->work, interrupt_event_handler);
     --> devm_request_irq(&dev->device, dev->irq, dpc_irq, IRQF_SHARED, "pcie-dpc", dpc);
 
-	/* set PCI_EXP_DPC_CTL_EN_NONFATAL, 0x6 offset in dpc cap: 0x02
+        /* set PCI_EXP_DPC_CTL_EN_NONFATAL, 0x6 offset in dpc cap: 0x02
          * PCI_EXP_DPC_CTL_INT_EN
          */
     --> pci_write_config_word(pdev, dpc->cap_pos + PCI_EXP_DPC_CTL, ctl);

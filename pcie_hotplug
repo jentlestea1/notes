@@ -136,23 +136,23 @@ struct slot -> state:
 
 
 
-
-                           BLINKINGOFF_STATE
-
-
-
-
-
-                 slot enable                 slot disable
- POWERON_STATE                STATIC_STATE                 POWEROFF_STATE
+                         +-------------------+
+                         | BLINKINGOFF_STATE |
+                         +-------------------+
 
 
 
 
++--------------+ slot enable +------------+  slot disable +--------------+
+|POWERON_STATE | ----------> |STATIC_STATE|  <----------- |POWEROFF_STATE|
++--------------+             +------------+               +--------------+
 
 
-                           BLINKINGON_STATE
 
+
+                          +----------------+
+                          |BLINKINGON_STATE|
+                          +----------------+
 
 
 
@@ -164,5 +164,8 @@ blinking means, it is powering up/down or a feedback from attention button press
                 or hot-plug operation is initiated through software.
 
 
+Reference
+---------
 
+1. PCI.EXPRESS系统体系结构标准教材].(美)Pavi.Budruk,Don.Anderson,Tom.Shanley.扫描版.pdf
 

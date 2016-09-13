@@ -1,11 +1,12 @@
 linux PCIe hotplug arch analysis
 ================================
 
--v0.1 2016.9.6 sherlock init
--v0.2 2016.9.7 sherlock update except irq part
--v0.3 2016.9.8 sherlock update irq part
--v0.4 2016.9.9 sherlock update irq part
+-v0.1 2016.9.6  sherlock init
+-v0.2 2016.9.7  sherlock update except irq part
+-v0.3 2016.9.8  sherlock update irq part
+-v0.4 2016.9.9  sherlock update irq part
 -v0.5 2016.9.12 sherlock update irq flow analysis part
+-v0.6 2016.9.13 sherlock update standard hot-insertion
 
 
 This analysis is based on v4.8-rc5.
@@ -26,6 +27,13 @@ main flow of this probe:
 pciehp_probe(struct pcie_device *dev)
         /* create struct controller, struct slot, get slot capability and slot status info */
     --> pcie_init(dev);
+            /* will register a delay_work in slot:
+             * INIT_DELAYED_WORK(&slot->work, pciehp_queue_pushbutton_work)
+             *
+             * This will be called, e.g. in hot-insertion, after inserting card
+             * and press button and wait 5s.
+             */
+        --> pcie_init_slot
         /* create struct hotplug_slot, struct hotplug_slot_info, struct hotplug_slot_ops,
          * fill functions in hotplug_slot_ops
          *
@@ -35,6 +43,9 @@ pciehp_probe(struct pcie_device *dev)
          *                               +-------> pci_slot
          *                                         hotplug_slot_ops
          *                                         hotplug_slot_info
+         *                   +----> delayed_work
+         *                   +----> workqueue_struct
+         *
          * then the whole structures will like above.
          *
          * After above structure been built, it will call pci_hp_register
@@ -170,16 +181,18 @@ If at this time, the pcie card has been hot-removed. The linux kernel can handle
                --> pciehp_configure_device
                    ...
                    --> pci_hp_add_bridge(dev)
-
 ```
 
+4. standard pcie hot-insertion:
+
+5. standard pcie hot-removal:
+
+ 
 note
 ----
 
 struct slot -> state:
-
-
-
+```
                          +-------------------+
                          | BLINKINGOFF_STATE |
                          +-------------------+
@@ -197,8 +210,7 @@ struct slot -> state:
                           +----------------+
                           |BLINKINGON_STATE|
                           +----------------+
-
-
+```
 
 from PCIe spec, power indicator should be a green led:
 off means power off, so we can insertion/removal

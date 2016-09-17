@@ -7,6 +7,7 @@ linux PCIe hotplug arch analysis
 -v0.4 2016.9.9  sherlock update irq part
 -v0.5 2016.9.12 sherlock update irq flow analysis part
 -v0.6 2016.9.13 sherlock update standard hot-insertion
+-v0.7 2016.9.17 sherlock update insertion/removal/assignment
 
 
 This analysis is based on v4.8-rc5.
@@ -62,7 +63,7 @@ pciehp_probe(struct pcie_device *dev)
     --> pcie_init_notification(ctrl);
             /* when request_irq, will let struct controller to be its private data */
         --> pciehp_request_irq(ctrl)
-            /* hardwar set here ?? enable some bits in slot control reg,
+            /* hardware set here ?? enable some bits in slot control reg,
              *
              * here, in pcie_write_cmd function, we need wait former cmd finished,
              * if needed, we should check the details of this wait function.
@@ -90,26 +91,44 @@ pcie_isr
          * same handle will be added to work_struct: interrupt_event_handler, 
          * in above function, it handle all cases.
          *
-         * We can not analyze all cases, so here just pick up hot-insert and surprise
-         * removal to analyze.
+         * We can not analyze all cases, the key point to understand the standard
+         * hot-insertion and hot-removal is to consider the whole flow together
+         * with INIT_DELAYED_WORK(&slot->work, pciehp_queue_pushbutton_work) in
+         * pcie_init mentioned above.
          *
          * when you analyze the different cases, please pay great attention on
          * struct slot -> state, which indicates the current status of hot-plug
          * state machine. And we should get clear the map between these state
          * and real physical state.
+         *
+         * STATIC_STATE: at this state, pcie ep already runs fine or ep already
+         * had been remove the system.
+         *
+         * BLINKINGON_STATE: in hot-insertion, after step1, card insertion; step2,
+         * press button, power indicator led will blinking 5s. This state just 
+         * indicates this.
+         *
+         * BLINKINGOFF_STATE: same as above, but in hot-removal.
+         *
+         * POWERON_STATE: in hot-insertion, in the 5s of power indicator led blinking,
+         * if we do not press button again, it will try to bring the ep power on,
+         * linkup, then add ep to system. This state just shows this.
+         *
+         * POWEROFF_STATE: same as above, but in hot-removal.
          */
     --> pciehp_queue_interrupt_event(slot, INT_BUTTON_PRESS);
 ```
 
-The flow of hot-insert is as below, but it can not match the stardard hot-inertion
-flow, which firstly inserting a PCIe card and then pressing the attention button.
+If we only see the flow of "interrupt_event_handler: INT_PRESENCE_ON", it can not
+match the stardard hot-inertion flow, which firstly inserting a PCIe card and then
+pressing the attention button.
 
 If in a system, when a pcie card been plugged in, a hotplug interrupt will be
 triggered and presence detect change bit set 1 in slot status register.
 This will trigger the operation in flow 1 below. you can see that now the whole
 hot-insertion process has no relationship with attention button press.
 
-1. pcie device hot insertion, trigger Presence Detect interrupt
+pcie device hot insertion, trigger Presence Detect interrupt:
 ```
        --> interrupt_event_handler: INT_PRESENCE_ON
            --> handle_surprise_event
@@ -134,10 +153,9 @@ hot-insertion process has no relationship with attention button press.
                                --> pciehp_green_led_on
                        --> p_slot->state = STATIC_STATE;
 ```
-   /* this is a litte wired, can not match the standard hot-insertion flow with
-    * the code here. now let's analyze hot-removal flow below firstly.
-    */
-2. button pressed, trigger Attention Button Pressed interrupt
+
+Let's see standard pcie hot-removal:
+button pressed, trigger Attention Button Pressed interrupt
 ```
        --> interrupt_event_handler: INT_BUTTON_PRESS
                /* In this function, it depends on hot-plug state machine to decide
@@ -160,10 +178,29 @@ hot-insertion process has no relationship with attention button press.
                --> queue_delayed_work(p_slot->wq, &p_slot->work, 5*HZ)
 ```
 As [1] page 394, step 4, it said, hotplug driver should let the driver of PCIe card
-stop, and card driver should handle stop the data/interrup. But I can not find this
-in linux kernel.
+stop, and card driver should handle stop the data/interrupt. We should check
+pci_stop_and_remove_bus_device below to get the details.
 
-If at this time, the pcie card has been hot-removed. The linux kernel can handle it by:
+If in 5s, we do not press button, it will eventually call pciehp_queue_pushbutton_work
+which initialized in pcie_init.
+```
+pciehp_queue_pushbutton_work
+        /* when hot-removal, state is BLINKINGOFF_STATE */
+    --> pciehp_queue_power_work(p_slot, DISABLE_REQ)
+            /* POWEROFF_STATE */
+        --> pciehp_power_thread
+            --> pciehp_disable_slot
+                --> remove_board(p_slot)
+                    --> pciehp_unconfigure_device(p_slot)
+                            /* the point here is how to removal the ep specific
+                             * work. If needed, we should check the details here.
+                             */
+                        --> pci_stop_and_remove_bus_device
+```
+above is the code map of standard hot-removal.
+
+If at any time, the pcie card has been surprise hot-removed, linux kernel can
+handle it by:
 ```
        --> interrupt_event_handler: INT_PRESENCE_OFF
            --> handle_surprise_event
@@ -174,7 +211,20 @@ If at this time, the pcie card has been hot-removed. The linux kernel can handle
                            --> remove_board(p_slot)
                        --> p_slot->state = STATIC_STATE;
 ```
-3. resource assignment in linux hotplug
+but the point here is how to handle ep specific work, need more investigation here.
+
+Let's see standard pcie hot-insertion:
+If we consider pciehp_queue_pushbutton_work in the flow of standard hot-insertion,
+it is easy to get the work flow analysis like standard hot-removal above.
+
+The point here is that only if the power of slot is off before inserting ep, can
+we use the button to trigger standard hot-insertion flow. If power of slot is on,
+once a ep has been inserted in slot, it will trigger presence ditect change interrupt,
+then code in kernel can handle following part of hot-insertion, we indeed do not
+need to press a button. We just show this in above section.
+
+Resource assignment problem in linux hotplug:
+kernel use below code to add a ep to system.
 ```
        --> pciehp_enable_slot
            --> board_added(p_slot)
@@ -182,17 +232,24 @@ If at this time, the pcie card has been hot-removed. The linux kernel can handle
                    ...
                    --> pci_hp_add_bridge(dev)
 ```
+But how does linux assign bus number ahead for a hotplug capable slot ?
+we should pay attention to a value: max in pci enumeration code.
+```
+       --> pci_scan_child_bus
+	   --> if (bus->self && bus->self->is_hotplug_bridge && pci_hotplug_bus_size)
+		if (max - bus->busn_res.start < pci_hotplug_bus_size - 1)
+			max = bus->busn_res.start + pci_hotplug_bus_size - 1;
+```
+It will check if this is a hotplug bridge and assign more pci buses for this bridge
+according to pci_hotplug_bus_size which can be set in command line of kernel.
 
-4. standard pcie hot-insertion:
 
-5. standard pcie hot-removal:
-
- 
 note
 ----
 
 struct slot -> state:
 ```
+(to finish)
                          +-------------------+
                          | BLINKINGOFF_STATE |
                          +-------------------+

@@ -1,0 +1,46 @@
+iommu call chain
+
+-v0.1 2017.3.12 Sherlock init
+
+
+/* drivers/base/core.c */
+device_add(struct device *dev)
+    --> blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+                                     BUS_NOTIFY_ADD_DEVICE, dev);
+
+/* drivers/iommu/arm-smmu-v3.c */
+arm_smmu_device_probe
+    --> bus_set_iommu(&pci_bus_type, &arm_smmu_ops)
+        --> iommu_bus_init(bus, ops)
+                /* here notifier's callback is iommu_bus_notifier */
+            --> bus_register_notifier(bus, nb)
+
+/* drivers/iommu/iommu.c */
+iommu_bus_notifier
+        /* action == BUS_NOTIFY_ADD_DEVICE, here ops is iommu_ops */
+    --> ops->add_device
+
+/* drivers/iommu/arm-smmu-v3.c */
+arm_smmu_add_device(struct device *dev)
+        /* reture an iommu_group about this device */
+    --> iommu_group_get_for_dev(dev)
+        --> __iommu_domain_alloc
+            --> iommu_group_add_device(group, dev)
+                --> __iommu_attach_device
+                    domain->ops->attach_dev(domain, dev)
+                        --> arm_smmu_domain_finalise(domain)
+                            /* important!!! */
+                        --> arm_smmu_install_ste_for_dev(dev->iommu_fwspec)
+                    
+                    /* here is another notifier call chain call */
+                --> blocking_notifier_call_chain(&group->notifier,
+				     IOMMU_GROUP_NOTIFY_ADD_DEVICE, dev);
+
+
+
+struct io_pgtable_ops *ops = smmu_domain->pgtbl_ops
+.device_group		= arm_smmu_device_group,
+how to use s1 and s2 ?
+
+
+

@@ -42,5 +42,5 @@ struct io_pgtable_ops *ops = smmu_domain->pgtbl_ops
 .device_group		= arm_smmu_device_group,
 how to use s1 and s2 ?
 
-
+what is the algrithm to creat iommu_group ?
 

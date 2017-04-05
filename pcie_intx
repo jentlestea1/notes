@@ -1,0 +1,22 @@
+PCIe INTx parse in ACPI
+-----------------------
+
+-v0.1 2017.4.5 Sherlock init
+
+
+
+
+pci_device_probe
+        /* arch/arm64/kernel/pci.c */
+    --> pcibios_alloc_irq
+        --> acpi_pci_irq_enable(dev)
+                /* driver/acpi/irq.c */
+            --> acpi_register_gsi(&dev->dev, gsi, triggering, polarity)
+                --> fwspec.fwnode = acpi_gsi_domain_id
+
+If we use GICv3:
+
+gic_acpi_init
+    --> acpi_set_irq_model(ACPI_IRQ_MODEL_GIC, domain_handle)
+        --> acpi_irq_model = model
+        --> acpi_gsi_domain_id = fwnode

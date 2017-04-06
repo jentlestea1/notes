@@ -1,13 +1,21 @@
-iommu call chain
+ARM SMMUv3 architecture
+-----------------------
 
 -v0.1 2017.3.12 Sherlock init
 
 
-/* drivers/base/core.c */
-device_add(struct device *dev)
-    --> blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
-                                     BUS_NOTIFY_ADD_DEVICE, dev);
+In [1], we know how SMMU driver has been loaded in ACPI.
 
+During the driver loading, arm_smmu_device_probe will be called. Most part of
+this function is to initiate SMMU hardware. 
+
+Then add smmu to a global list by: iommu_device_register(&smmu->iommu)
+
+Then bus_set_iommu(&pci_bus_type, &arm_smmu_ops), set iommu_ops for a specific
+bus, and call iommu_bus_init(bus, ops) ->  bus_register_notifier(bus, nb) to
+register a notifier_block to above bus. the notifier callback is iommu_bus_notifier
+which will call add_device in SMMU's iommu_ops:
+```
 /* drivers/iommu/arm-smmu-v3.c */
 arm_smmu_device_probe
     --> bus_set_iommu(&pci_bus_type, &arm_smmu_ops)
@@ -19,22 +27,36 @@ arm_smmu_device_probe
 iommu_bus_notifier
         /* action == BUS_NOTIFY_ADD_DEVICE, here ops is iommu_ops */
     --> ops->add_device
+```
 
-/* drivers/iommu/arm-smmu-v3.c */
+When a device is adding to a bus, above  notifier callback will be called:
+```
+/* drivers/base/core.c */
+device_add(struct device *dev)
+    --> blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+                                     BUS_NOTIFY_ADD_DEVICE, dev);
+```
+
+/* In drivers/iommu/arm-smmu-v3.c, create related iommu_group for dev? */
 arm_smmu_add_device(struct device *dev)
         /* reture an iommu_group about this device */
     --> iommu_group_get_for_dev(dev)
+        --> ops->device_group(dev)
+                /* there is a algrithm to find/create one iommu_group?? */
+            --> pci_device_group
+            /* arm_smmu_domain_alloc */
         --> __iommu_domain_alloc
-            --> iommu_group_add_device(group, dev)
-                --> __iommu_attach_device
-                    domain->ops->attach_dev(domain, dev)
-                        --> arm_smmu_domain_finalise(domain)
-                            /* important!!! */
-                        --> arm_smmu_install_ste_for_dev(dev->iommu_fwspec)
+            /* add a dev to a iommu_group */
+        --> iommu_group_add_device(group, dev)
+            --> __iommu_attach_device
+                domain->ops->attach_dev(domain, dev)
+                    --> arm_smmu_domain_finalise(domain)
+                        /* important!!! */
+                    --> arm_smmu_install_ste_for_dev(dev->iommu_fwspec)
                     
-                    /* here is another notifier call chain call */
-                --> blocking_notifier_call_chain(&group->notifier,
-				     IOMMU_GROUP_NOTIFY_ADD_DEVICE, dev);
+                /* here is another notifier call chain call? */
+            --> blocking_notifier_call_chain(&group->notifier,
+                IOMMU_GROUP_NOTIFY_ADD_DEVICE, dev);
 
 
 
@@ -43,4 +65,9 @@ struct io_pgtable_ops *ops = smmu_domain->pgtbl_ops
 how to use s1 and s2 ?
 
 what is the algrithm to creat iommu_group ?
+
+
+Reference
+
+[1] http://blog.csdn.net/scarecrow_byr/article/details/53844162
 

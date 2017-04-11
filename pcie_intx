@@ -55,5 +55,34 @@ If interrup_controller field is 0, we will use "global interrupt pool" mentioned
 in ACPI spec. In ARM world, this "global interrupt pool" will be GICD which is
 defined in above gic_acpi_init
 
-
-
+If our hardware topology is like this:
+```
+        system bus  
+             |         
+             +----- RP0(device number is 0)
+             |
+             +----- RP1(device number is 1)
+             |
+             +----- RP2(device number is 2)
+             |
+             +----- IEP(device number is y)
+             |
+```
+We can configure the INTx _RPT as:
+```
+        Name(_PRT, Package{
+                Package{0xFFFF,0,0,RP0_INTA},
+                Package{0xFFFF,1,0,RP0_INTB},
+                Package{0xFFFF,2,0,RP0_INTC},
+                Package{0xFFFF,3,0,RP0_INTD},
+                Package{0x1FFFF,0,0,RP1_INTA},
+                Package{0x1FFFF,1,0,RP1_INTB},
+                Package{0x1FFFF,2,0,RP1_INTC},
+                Package{0x1FFFF,3,0,RP1_INTD},
+                Package{0x2FFFF,0,0,RP2_INTA},
+                Package{0x2FFFF,1,0,RP2_INTB},
+                Package{0x2FFFF,2,0,RP2_INTC},
+                Package{0x2FFFF,3,0,RP2_INTD} 
+                Package{0xyFFFF,1,0,IEP_INTA} 
+        })
+```

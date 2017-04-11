@@ -10,7 +10,15 @@ pci_device_probe
     --> pcibios_alloc_irq
         --> acpi_pci_irq_enable(dev)
             --> pin = dev->pin
-                /* From a EP, we find the related INTx in the RP. to do about detail? */
+                /* From a EP, we find the related INTx in the RP.
+                 * It will search from the EP which wants to be assigned a INTx
+                 * to find a host bridge which has the INTx configure(will be in
+                 * the host bridge's DSDT device)
+                 * The device(RP or IEP) which directly connects the logic host
+                 * bridge and the pin number after swillzing will be passed to
+                 * check function to find correct irq number
+                 *
+                 */
             --> acpi_pci_irq_lookup(dev, pin)
                 /* get irq number in _PRT */
             --> gsi = entry->index

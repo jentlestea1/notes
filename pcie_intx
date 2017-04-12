@@ -1,10 +1,12 @@
 PCIe INTx parse in ACPI
 -----------------------
 
--v0.1 2017.4.5 Sherlock init
--v0.2 2017.4.7 Sherlock add all call chain
+-v0.1 2017.4.5  Sherlock init
+-v0.2 2017.4.7  Sherlock add all call chain
+-v0.3 2017.4.12 Sherlock add _PRT demo
 
 When probing a PCIe device, it will assign INTx to it.
+```
 pci_device_probe
         /* arch/arm64/kernel/pci.c */
     --> pcibios_alloc_irq
@@ -15,11 +17,17 @@ pci_device_probe
                  * to find a host bridge which has the INTx configure(will be in
                  * the host bridge's DSDT device)
                  * The device(RP or IEP) which directly connects the logic host
-                 * bridge and the pin number after swillzing will be passed to
+                 * bridge and the pin number after swizzling will be passed to
                  * check function to find correct irq number
-                 *
+                 * (check function: acpi_pci_irq_check_entry in
+                 * acpi_pci_irq_find_prt_entry)
                  */
             --> acpi_pci_irq_lookup(dev, pin)
+                --> acpi_pci_irq_find_prt_entry(dev, pin, &entry)
+                --> while (bridge) {
+                        --> pin = pci_swizzle_interrupt_pin(dev, pin)
+                        --> acpi_pci_irq_find_prt_entry(bridge, pin, &entry)
+                    }
                 /* get irq number in _PRT */
             --> gsi = entry->index
                 /* driver/acpi/irq.c */
@@ -29,7 +37,7 @@ pci_device_probe
                 --> irq_create_fwspec_mapping(&fwspec)
                 /* here rc is the related virq */
             --> dev->irq = rc
-
+```
 If we use GICv3:
 ```
 gic_acpi_init

@@ -2,7 +2,7 @@ ARM SMMUv3 architecture
 -----------------------
 
 -v0.1 2017.3.12 Sherlock init
-
+-v0.2 2017.4.17 Sherlock add usage part
 
 In [1], we know how SMMU driver has been loaded in ACPI.
 
@@ -36,15 +36,15 @@ device_add(struct device *dev)
     --> blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
                                      BUS_NOTIFY_ADD_DEVICE, dev);
 ```
-
-/* In drivers/iommu/arm-smmu-v3.c, create related iommu_group for dev? */
+```
+/* In drivers/iommu/arm-smmu-v3.c, create related iommu_group for dev */
 arm_smmu_add_device(struct device *dev)
         /* reture an iommu_group about this device */
     --> iommu_group_get_for_dev(dev)
         --> ops->device_group(dev)
                 /* there is a algrithm to find/create one iommu_group?? */
             --> pci_device_group
-            /* arm_smmu_domain_alloc */
+            /* arm_smmu_domain_alloc, one iommu_group <-> one iommu_domain */
         --> __iommu_domain_alloc
             /* add a dev to a iommu_group */
         --> iommu_group_add_device(group, dev)
@@ -57,17 +57,34 @@ arm_smmu_add_device(struct device *dev)
                 /* here is another notifier call chain call? */
             --> blocking_notifier_call_chain(&group->notifier,
                 IOMMU_GROUP_NOTIFY_ADD_DEVICE, dev);
+```
+The usage of smmu is: 1. DMA, 2. VM
 
+- DMA usage
 
+  We can go on in [1] to see how a PCIe device use SMMU to do DMA
+```
+  pci_device_add
+          /* In v4.12, this function will be moved to really_probe */
+      --> pci_dma_configure
+          --> acpi_dma_configure
+              --> arch_setup_dma_ops
+                  --> __iommu_setup_dma_ops
+                      --> do_iommu_attach
+                              /*
+                               * above __iommu_domain_alloc just allocate an
+                               * iommu_domain. here we initialize the iova domain
+                               * in it.
+                               * we do not do the map here.
+                               */
+                          --> iommu_dma_init_domain(domain, dma_base, size, dev)
+                          --> dev->dma_ops = &iommu_dma_ops
+```
 
-struct io_pgtable_ops *ops = smmu_domain->pgtbl_ops
-.device_group		= arm_smmu_device_group,
-how to use s1 and s2 ?
+- VM usage
 
-what is the algrithm to creat iommu_group ?
-
+  to do...
 
 Reference
 
 [1] http://blog.csdn.net/scarecrow_byr/article/details/53844162
-

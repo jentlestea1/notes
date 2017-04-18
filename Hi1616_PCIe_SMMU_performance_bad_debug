@@ -14,7 +14,7 @@ document just shares the related results and information.
      |   D05   82599  |<------>|  82599   D05  |
      +----------------+        +---------------+
 
-           +-----+         |-----+
+           +-----+         +-----+
            | cpu |         | ddr |
            +--+--+         +--+--+
               |               |

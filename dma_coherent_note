@@ -1,7 +1,8 @@
-dma coherent note
------------------
+Linux DMA coherent analysis
+---------------------------
 
 -v0.1 2017.5.5 Sherlock init
+-v0.2 2017.5.6 Sherlock finish
 
 There are dma-coherent in DT and _CCA in ACPI to configure to tell kernel if
 hardware support auto cache coherence.
@@ -51,6 +52,11 @@ call train is like:
                     --> ops->map
                         --> __arm_lpae_map
                             --> __arm_lpae_set_pte
-                                    /* we configure SMMU page table here */
+                                    /* 
+                                     * we configure SMMU page table here, as
+                                     * mentioned above, if we configure _CCA or
+                                     * dma-coherent, pte will include IOMMU_CACHE,
+                                     * which means DMA will be operated as cacheable
+                                     */
                                 --> *ptep = pte;
 ```

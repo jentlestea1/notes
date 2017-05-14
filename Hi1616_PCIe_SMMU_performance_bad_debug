@@ -155,22 +155,19 @@ ftrace to confirm our idea, then use perf to locate the hot point explicitly.
 
    Then common function iommu_dma_map_page in drivers/iommu/dma-iommu.c will be
    called. There are two steps in above function: 1. allocate iova, this is a
-   common function; 2. build map between IOVA and PA, this is IOMMU specific
+   common function; 2. build map between IOVA and PA, this is SMMU specific
    function.   
 
    The hot point is in the point 1 above, so we need understand the module of
    how to allocate iova. A red black tree in iova_domain is used to store all iova
    range in system, after allocating or freeing an iova range, an iova range
-   should be inserted or remove from above red black tree.
-
-    
-   
-
-   
-
-   
-
-
+   should be inserted or remove from above red black tree. Now we allocate the
+   iova range from the end of the iova domain, for 32 DMA mask, it is 0xffffffff,
+   for 64bit DMA mask it is 0xffffffff_ffffffff. There is a cache for 32bit DMA
+   mask to store the iova range in last time, but for 64bit DMA MASK, there is
+   no such cache. so for 64bit DMA, when we want to allocate a DMA range in
+   iova domain, we have to search from the 0xffffffff_ffffffff. If we already allocate
+   a lot iova range, then we have to search all iova range allocated before.
 
 
 3. solution
@@ -272,9 +269,23 @@ index f27bb2c..d4670c1 100644
  	struct rb_node	*cached32_node; /* Save last alloced node */
 +	struct rb_node	*cached64_node; /* Save last 64bit alloced node */
  	unsigned long	granule;	/* pfn granularity for this domain */
- 	unsigned long	start_pfn;	/* Lower limit for this domain */
+ 	unsigned long	start_pfn; 	/* Lower limit for this domain */
  	unsigned long	dma_32bit_pfn;
 ```
+
+above solution just adds another cache for 64bit DMA Mask.
+
+But now Linux kernel community just merged a PATCH:
+        iommu/dma: Implement PCI allocation optimisation
+into mainline kernel.
+
+This patch just castes 64bit DMA mask to 32bit DMA mask, so we can still use
+32bit DMA cache to improve the performance.
+
+NOTE: but if this we can not allocate a 64bit iova to a PCIe device's DMA target
+      address. This is a problem :(
+
+
 4. problem
 ----------
 

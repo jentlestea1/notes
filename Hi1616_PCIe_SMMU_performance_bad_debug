@@ -1,9 +1,10 @@
-Hi1616 PCIe + SMMU bad performance debug
+Hixxxx PCIe + SMMU bad performance debug
 ========================================
 
--v0.1 2017.3.6 Sherlock init
+-v0.1 2017.3.6  Sherlock init
+-v0.1 2017.5.12 Sherlock delete some information
 
-Then we enabled SMMU in D05 board, we found that the performance of 82599 pluged
+Then we enabled SMMU in Dxx board, we found that the performance of 82599 pluged
 in PCIe slot is very bad. LeiZhen and I spent some to debug this problem. This
 document just shares the related results and information.
 
@@ -11,7 +12,7 @@ document just shares the related results and information.
 -----------------------------
 ```
      +----------------+        +---------------+
-     |   D05   82599  |<------>|  82599   D05  |
+     |   Dxx   82599  |<------>|  82599   Dxx  |
      +----------------+        +---------------+
 
            +-----+         +-----+
@@ -35,7 +36,7 @@ document just shares the related results and information.
 Hardware topology as showed above. In order to use SMMU to translate data from
 82599 to DDR, we need enable SMMU node in ACPI table.[1]
 
-Then boot up two D05 boards connected by two 82599 networking cards. When using
+Then boot up two Dxx boards connected by two 82599 networking cards. When using
 iperf to test the performance between two 82599 networking cards, it is very bad,
 nearly 100Mbps.[2]
 
@@ -91,7 +92,7 @@ ftrace to confirm our idea, then use perf to locate the hot point explicitly.
 
    Sadly, there was no perf(PMU hardware event) support in ACPI in plinth
    kernel :( So we directly set PMU related registers to get how many CPU cycles
-   each function has spent.[4]
+   each function has spent.
 ```
 	/* Firstly call this init function to init PMU */
 	static void pm_cycle_init(void)
@@ -297,13 +298,13 @@ NOTE: but if this we can not allocate a 64bit iova to a PCIe device's DMA target
  
  * NIC panic
 
-   After SMMU enable and applying above patch, hns will panic :( should fix this.
-   (p.s. already find where the problem is, hns dma map once, but unmap multiple
+   After SMMU enable and applying above patch, xxx net will panic :( should fix this.
+   (p.s. already find where the problem is, xxx net dma map once, but unmap multiple
     times)
 
 reference
 ---------
-[1] patch
+[1] xxx
 [2] JIRA bug
 [3] https://lwn.net/Articles/370423/
     
@@ -311,5 +312,3 @@ reference
     echo ixgbe_* > set_graph_function
     echo function_graph > current_tracer
     cat trace > ~/smmu_test
-
-[4] git link

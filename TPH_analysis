@@ -30,13 +30,10 @@ TPH analysis
 
 TPH is a feature by which we can controll if TLP from EP can read/write to DDR
 or L3 cache directly. As the attribute of read/write flow is different, e.g.
-some data will be read soon, after a DMA write to DDR/Cache, for this kind of
-date, it is better to put them directly to cache.
+some data will be read soon by CPU, after a DMA write to DDR/Cache, for this
+kind of date, it is better to put them directly to cache.
 
-To do... (what is the different, if we operate DMA by SMMU, which can be configured
-          as cacheable)
-
-Physically, RP will do the read/write to DDR/cach. TH, PH, ST in PCIe config
+Physically, RP will do the read/write to DDR/cach. TH, PH, ST in PCIe TLP
 will be used to control above operation. TH bit(one bit) in TLP indicates if we
 enable TPH feature. PH(2 bits) in TLP indicates which kind of flow it is. ST is
 a hardware specific design, which can be stored in MSI-X table or TPH capability.
@@ -68,6 +65,6 @@ is hard to modified, we only can use ST and DMA descriptor to controll TPH behav
 
 Then third is that we should firstly configure cacheable attribute, then enable
 TPH to put data to L3 cache directly, e.g. we should firstly enable CCA=1 for RP,
-then enable TPH feature.
+then enable TPH feature(e.g. we can enable SMMU and CCA=1 to enable cacheable attribute).
 
 The last is integrated PCIe devices, e.g. networking, also have TPH like feature.

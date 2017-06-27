@@ -116,21 +116,14 @@ read/write operation with a PA directly, which will improve the performance.
                 --> arm_smmu_atc_inv_to_cmd(ssid, iova, size, &cmd)
 ```
 
-
-struct arm_smmu_master_data is for every device under a SMMU
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+arm_smmu_unmap input: iommu domain, iova, size
+       /*
+        * we pick each device in this iommu domain to do the invalidation operation,
+        * normally, we have one device in one iommu domain.
+        * 
+        * here struct arm_smmu_master_data is for every device under a SMMU, and
+        * it has been created in arm_smmu_add_device.
+        */
+    -> arm_smmu_atc_inv_domain  input: smmu_domain, ssid, iova, size
+        --> arm_smmu_atc_inv_master: 
+        

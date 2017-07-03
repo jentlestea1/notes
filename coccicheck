@@ -1,6 +1,7 @@
 Use coccinelle to check patch in Ubuntu 14.04
+---------------------------------------------
 
-In Ubuntu14.04, when running coccinelle, it will run. So we install it manually
+In Ubuntu14.04, when running coccinelle, it will fail. So we install it manually
 to make patch check.
 
 1. install from its git repo: https://github.com/coccinelle/coccinelle.git

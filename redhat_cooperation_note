@@ -1,2 +1,61 @@
 Redhat cooperation note
 =======================
+
+-v0.1 2017.7.5 WangZhou init
+
+
+Abstract:
+
+ HiSilicon Turing department implements Hi161x/Hi162x ARM Server SoC, we want
+ them to be supported by Redhat distributions. So WangZhou(HiSilicon) and MaJun
+ (CSI) are assigned the job of Redhat partner engineer to support this. This
+ document just help to record the process of Redhat distribution support. As this
+ is the first time that HuaWei and Redhat cooperate to enable Redhat distribution
+ in HiSilicon ARM SoC, the experience which we get from the process will make
+ later cooperation earlier, and we will also record this. For the people who will
+ later be Redhat partner engineer, this document will be very usefull.
+
+
+Sections in this document:
+
+ - Backgroud: project, information, people...
+
+ - Develop Environment: huawei lab, boston lab, software, hardware...
+
+ - work: backport, test, cooperation...
+
+ - requirements/tasks/bugs
+
+ - conclusion
+
+ - reference
+
+
+1. Backgroud
+------------
+
+
+2. Develop Environment
+----------------------
+
+
+3. work
+-------
+
+
+4. requirements/tasks/bugs
+--------------------------
+
+
+5. conclusion
+-------------
+
+
+6. reference
+------------
+
+
+
+
+
+

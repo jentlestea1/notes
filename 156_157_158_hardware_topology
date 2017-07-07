@@ -1,0 +1,64 @@
+Distribution support 156 157 158 hardware topopoly
+--------------------------------------------------
+
+-v0.1 2017.7.7 Sherlock init
+
+
+```
+                                           slot1  --+               slot2  --+
+                                                    |                        |
+                                             NA   --+               slot3  --+
+                                                    |                        |
+                                             NA   --+               slot4  --+
+                                                    |        slot0           |
+   +---------+---------+----------+----------+------+-----+-----------+------+------+-------+
+   | HNS GE1 | HSN GE2 | HNS XGE1 | HNS XGE2 | Riser card | PCIe slot | Riser card  | Power |
+   +---------+---------+----------+----------+------------+-----------+-------------+-------+
+
+   When we see the T2280 sever from its back, it looks like above picture.
+
+```
+
+156(disk been connected to 3008):
+```
+                                                                         to 192.168.10.x
+                                                                                 |
+                                                                to 192.168.1.x[1]|
+                                                                       |  +------+
+                                                   slot1  --+          |  | 82599  --+--------------------+
+                                                            |          |  |          |                    |
+                                                     NA   --+          |  +-M 25G  --+                    |
+                                                            |          |             |                    |
+                                                     NA   --+          |    ES3000 --+                    |
+                                                            |         I350           |                    |
+           +---------+---------+----------+----------+------+-----+-----------+------+------+-------+     |
+           | HNS GE1 | HSN GE2 | HNS XGE1 | HNS XGE2 | Riser card | PCIe slot | Riser card  | Power |     |
+           +---------+---------+----+-----+-----+----+------------+-----------+-------------+-------+     |
+                                    |           |                                                         |
+                                    |           |                                                         |
+                                    |           |                                                         |
+                                    |           |                                                         |
+                                    |           |                      +----------------------------------+
+157(disk been connected to HiSiSAS):|           |                      |
+                                    |           |                      |
+                                    |           |                      |
+                                    |           |                      |
+                                    |           |  slot1  --+          |    slot2  --+
+                                    |           |           |          |             |
+                                    |           |    NA   --+          |    slot3  --+
+                                    |           |           |          |             |
+                                    |           |    NA   --+          |    slot4  --+
+                                    |           |           |        82599           |
+           +---------+---------+----+-----+-----+----+------+-----+-----------+------+------+-------+
+           | HNS GE1 | HSN GE2 | HNS XGE1 | HNS XGE2 | Riser card | PCIe slot | Riser card  | Power |
+           +---------+---------+----------+----------+------------+-----------+-------------+-------+
+
+```
+
+158(disk been connected to 3108):
+...
+
+NOTE:
+
+ 1. As I350 here is connected to 192.168.1.x, when testing it, please disable 
+    HNS GEN1 in 156, because HNS GEN1 is connected to 192.168.1.x also.

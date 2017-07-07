@@ -56,6 +56,29 @@ Sections in this document:
 
 
 
+Build redhat VPN in openlab2 board
+----------------------------------
 
+ - Install a redhat ISO in one board A.
 
+ - Download openvpn and pkcs11-helper rpm in:
+   (as there are no these two packages in current ISO)
+   http://mirror.math.princeton.edu/pub/epel/7/aarch64/
+
+ - Copy these two packages to above board, and install them:
+   rpm -ivh pkcs11-helper-1.11-3.el7.aarch64.rpm
+   rpm -ivh openvpn-2.4.3-1.el7.aarch64.rpm
+
+ - Install ansible in another server, which can be X86 server and ubuntu system.
+   
+ - Get the vnp.playbook.zip from Redhat engineer FuWei, copy it to above server
+   and unzip it.
+
+ - Modify hosts in RHVPN.yml to "host: IP(which is the IP of board A)"
+   Modify redhatter in RHVPN.yml to "redhatter: your redhat account(e.g. zhowang)"
+   Add IP of board A in /etc/ansible/hosts
+
+ - Run ansible-playbook RHVPN.yml
+   then ansible will install openvpn in board A automatically.
+   (NOTE: if there is bug in the ansible script, you may fail to install openvpn)
 

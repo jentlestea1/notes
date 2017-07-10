@@ -82,3 +82,16 @@ Build redhat VPN in openlab2 board
    then ansible will install openvpn in board A automatically.
    (NOTE: if there is bug in the ansible script, you may fail to install openvpn)
 
+
+The last "released" repo for RHELSA7 is:
+http://download-node-02.eng.bos.redhat.com/released/RHEL-7/7.3/Server/aarch64/os/
+
+The latest Beta for RHELA7.4 is:
+http://download-node-02.eng.bos.redhat.com/released/RHEL-7/7.4-Beta/Server/aarch64/os/
+
+but the latest 'snapshot' for RHELA-7.4 is:
+http://download-node-02.eng.bos.redhat.com/rel-eng/RHEL-7.4-Snapshot-5.0/compose/Server/aarch64/os/
+
+and the latest Pegas Early Access (EA) is:
+http://download-node-02.eng.bos.redhat.com/rel-eng/Pegas-7.4-EA-2.2/compose/Server/aarch64/os/
+

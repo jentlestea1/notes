@@ -1,4 +1,5 @@
-PCIe AER Arch analysis
+Linux PCIe AER Arch analysis
+----------------------------
 
 -v0.1 2016.5.28 sherlock init
 -v0.2 2016.6.1  sherlock add pcie_port driver and aer driver
@@ -7,8 +8,8 @@ PCIe AER Arch analysis
 Backgroud
 ----------
 
-We need support PCIe AER in Hi1612/Hi1620, this document helps to analyze the AER
-driver in Linux, help to find what we should do to support AER under this framework.
+This document helps to analyze the AER driver in Linux, help to find what we
+should do to support AER under this framework.
 
 
 Code position and related system
@@ -42,8 +43,8 @@ module_init(aer_service_init) in drivers/pci/pcie/aer/aerdrv.c
                                        +--> aer_probe
                                             aer_root_reset
                                             ...
+        --> aer_acpi_firmware_first() //##
         --> aer_probe
-            --> aer_init
             --> aer_alloc_rpc
             --> request_irq
             --> aer_enable_rootport
@@ -70,6 +71,7 @@ solve this problem.[2]
 
 In function init_service_irqs, linux allocate interrupt for PM, HP, VC, DPC and AER.
 
-Note:
+Note
+----
 1. TRACE_EVENT(): http://lwn.net/Articles/383362/
 2. https://lkml.org/lkml/2016/5/26/37

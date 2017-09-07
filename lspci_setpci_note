@@ -1,5 +1,5 @@
-PCIe userspace tools: lspci, setpci
-===================================
+PCIe userspace tools: lspci, setpci and sysfs
+=============================================
 
 -v0.1 2017.9.5 Sherlock init
 
@@ -85,9 +85,24 @@ setpci
 sysfs
 -----
 
- remove
+ - remove
 
- rescan
+   We can remove a device by writing 1 to its remove file.
 
- reset
+ - rescan
+
+   We can rescan a device/bus by writing 1 to its rescan file, we can also rescan
+   whole PCIe system by echo 1 > /sys/bus/pci/rescan (need to check...).
+
+   When we do rescan a device, we find its father bus, and pass this bus to PCIe
+   enumeration process.
+
+   However, if we rescan a RP or PCIe bridge, as the structure of related RP or
+   PCIe bridge is still there, Linux kernel will do nothing about MEM/IO window
+   of related RP or PCIe bridge.(however, writing/reading MEM/IO operation will
+   be done to checkout if this bridge's MEM/IO window register is working)
+
+ - reset
+   
+   (to do...)
 

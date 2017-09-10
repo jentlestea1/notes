@@ -41,7 +41,7 @@ domain 0 bus 0; 01.0 means a device under bus 0, so its BDF should be 0000:00:01
 01.0-[01] here [01] means the bus number under device 00:01.0, some times we may
 get [xx-yy] which means the bus range under this device, apparently this device
 is a PCIe bridge; 01.0-[01]----00.0 here 00.0 means a device which device:function
-is 00.0, so together with its fater bus, its BDF should be 0000:01:00.0.
+is 00.0, so together with its father bus, its BDF should be 0000:01:00.0.
   
  lspci -s ff:0f.1
 ```
@@ -78,8 +78,8 @@ setpci
 
  setpci -s BDF 20.L=0x12345678
 
- above command set 0x20 configure space of a device which BDF is BDF to 0x12345678.
- L here means 32bit, W will mean 16bit, B will mean 8bit.
+ Above command set 0x20 offset of configure space of a device which BDF is BDF
+ to 0x12345678. L here means 32bit, W will mean 16bit, B will mean 8bit.
 
 
 sysfs

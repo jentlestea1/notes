@@ -107,5 +107,5 @@ In fact, we can also enable U, R, C in UEFI, however, even if we do not enable
 U, R, C in UEFI, from the logic of ACS in kernel, it believes our chip's RP(a
 device has ACS cap) has ACS isolation.
 
+So let's try to set pci_acs_enable = 1 to hack this kernel bug tempoarily.
 (to do: why 82599 load before pcie port driver?)
-

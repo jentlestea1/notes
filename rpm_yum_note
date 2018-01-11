@@ -34,10 +34,20 @@ rpm
 
 yum
 ---
-       yum search kernel    --> search in yum datebase.
+       yum search kernel      --> search in yum datebase.
+
+       yum provides software  --> find which package contains this software in
+                                  yum database. similar with rpm -qf file, but
+                                  rpm searchs packages locally.
+                                  yum provides fio, we will get:
+
+       yum info package
 
 rpmbuild
 --------
+
+download rpm
+------------
 
 download source
 ---------------

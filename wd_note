@@ -1,7 +1,13 @@
 wd note
 -------
 
+v0.1 2017.10.9 sherlock init
 
+/*
+ * echo `cat /proc/sys/kernel/random/uuid` > /sys/class/mdev_bus/dummy_wd.0/mdev_supported_types/dummy-wd_memcopy/create
+ *
+ * after create a virtual device, we will get below files in uuid/params/xxx
+ */
 mdev_fops.mdev_attr_groups
         +-> max_copy_size 
         +-> aflags
@@ -16,8 +22,13 @@ supported_type_groups
         +-> latency
         +-> throughput
         +-> flags
+            /* how to create the create file? */
+            in
+            add_mdev_supported_type
+                --> sysfs_create_file(&type->kobj, &mdev_type_attr_create.attr)
+        +-> create
 
-        /* all offered by wd */
+        /* all offered by wd, for phsical devices: /sys/class/mdev_bus/dummy_wd.0/wdev/xxx */
 mdev_fops.dev_attr_groups
         +-> node_id
         +-> priority
@@ -35,6 +46,7 @@ In wd framework:
  - create: call get_queue
    
 
+wd_dev_register
 
 
 

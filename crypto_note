@@ -1,0 +1,75 @@
+crypto note
+-----------
+
+v0.1 2017/12/19 wangzhou init
+
+Analysis will start from crypto test cases in crypto/testmgr.c, e.g. deflate
+
+In alg_test_comp, sync branch:
+```
+struct crypto_comp {
+	struct crypto_tfm base;
+};
+
+struct crypto_tfm {
+
+	u32 crt_flags;
+	
+	union {
+		struct ablkcipher_tfm ablkcipher;
+		struct blkcipher_tfm blkcipher;
+		struct cipher_tfm cipher;
+		struct compress_tfm compress;
+                    --> cot_compress
+                    --> cot_decompress
+	} crt_u;
+
+	void (*exit)(struct crypto_tfm *tfm);
+	
+	struct crypto_alg *__crt_alg;
+
+	void *__crt_ctx[] CRYPTO_MINALIGN_ATTR;
+};
+
+struct crypto_comp = crypto_alloc_comp(driver, type, mask);
+    --> crypto_alloc_base(alg_name, type, mask)
+            /* find algrithm: use alg_name, driver name */
+        --> alg = crypto_alg_mod_lookup(alg_name, type, mask);
+            /* struct crypto_tfm */
+        --> tfm = __crypto_alloc_tfm(alg, type, mask);
+            --> tfm->__crt_alg = alg;
+            --> crypto_init_ops
+                --> crypto_init_compress_ops(tfm)
+                        /* ops is struct compress_tfm */
+	            --> ops->cot_compress = crypto_compress;
+                            /* tfm->__crt_alg->cra_u.compress.coa_compress */ 
+                            /*
+                             * e.g. drivers/crypto/cavium/zip/zip_main.c
+                             *      struct crypto_alg zip_comp_deflate.
+                             * will finally call zip_comp_compress!
+                             */
+                        --> tfm->__crt_alg->cra_compress.coa_compress
+
+	            --> ops->cot_decompress = crypto_decompress;
+                /* important: alg->cra_init(tfm) */
+                /* so hardware can do preparation here! */
+            --> if (!tfm->exit && alg->cra_init && (err = alg->cra_init(tfm)))
+
+crypto_comp_compress(crypto_comp, src, slen, dst, dlen)
+        /* so hardware can do compress here! */
+    --> compress_tfm->cot_compress;
+```
+
+In alg_test_comp, async branch:
+```
+struct crypto_acomp {
+	int (*compress)(struct acomp_req *req);
+	int (*decompress)(struct acomp_req *req);
+	void (*dst_free)(struct scatterlist *dst);
+	unsigned int reqsize;
+	struct crypto_tfm base;
+};
+
+```
+
+

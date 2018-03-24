@@ -46,8 +46,12 @@ yum
 rpmbuild
 --------
 
+	...
+
 download rpm
 ------------
+
+	...
 
 download source
 ---------------
@@ -70,3 +74,8 @@ download source
 
 compile source to rpm package
 -----------------------------
+
+	For linux kernel, you can directly run: "make rpm" to do so, it will
+	create kernel/kernel-dev/kernel-header rpm packages.
+
+	But for other packages, to do ...

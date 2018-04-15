@@ -1,0 +1,17 @@
+
+1. enther UEFI shell: D06> 
+
+2. enter start fs1:\EFI\redhat\grubaa64.efi
+
+3. then you will enter the shell of grub: grub>
+
+4. fine where is grub.cfg in grub shell, then enter:
+
+   configfile grub.cfg
+   (my case is: configfile (hd1,gpt1)/efi/redhat/grub.conf)
+
+   then enter grub menu
+
+5. choose which kernel to boot
+
+

@@ -43,6 +43,8 @@ yum
 
        yum info package
 
+       yum list package
+
 rpmbuild
 --------
 

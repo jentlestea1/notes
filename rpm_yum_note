@@ -1,8 +1,9 @@
 rpm/yum note
 ------------
 
--v0.1 2017.12.7 Sherlock
--v0.1 2017.12.18 Sherlock add how to download source code.
+-v0.1 2017.12.7  Sherlock
+-v0.2 2017.12.18 Sherlock add how to download source code
+-v0.3 2018. 4.22 Sherlock add rpm download
 
 
 rpm
@@ -41,19 +42,32 @@ yum
                                   rpm searchs packages locally.
                                   yum provides fio, we will get:
 
-       yum info package
+       yum info package       --> show information of one package
+       				  e.g. yum info kernel will show all kernel
+				       packages with different versions
 
-       yum list package
+       yum list               --> list all packages in related yum repo.
 
 rpmbuild
 --------
 
-	...
+	1. from source to build rpm package
+
+		...
+
+	2. downlaod a rpm, modify it, and re-build a new rpm package
+
+		...
 
 download rpm
 ------------
 
-	...
+	This document shares the way to download rpm package using yum tools:
+	https://www.ostechnix.com/download-rpm-package-dependencies-centos/
+
+	"yum install --downloadonly" will also install package.
+
+	"yumdownloader" just downloads the package.
 
 download source
 ---------------

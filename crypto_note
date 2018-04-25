@@ -2,14 +2,14 @@ crypto note
 -----------
 
 v0.1 2017/12/19 Sherlock init
-v0.2 2017/12/19 Sherlock add sync/asyns code analysis
+v0.2 2018/3/25 Sherlock add sync/asyns code analysis
 			 in airplane from Boston to HK
 
 本文分析Linux kernel里crypto子系统的大概实现，写crypto子系统下的加速器驱动的时候
 可以参考下。crypto子系统支持加解密，压缩解压缩等功能。
 
 Analysis will start from crypto test cases in crypto/testmgr.c, e.g. deflate.
-上面的路劲上是内核里这对crypto子系统的一个测试程序。通过分析这个程序可以大概
+上面的路径上是内核里这对crypto子系统的一个测试程序。通过分析这个程序可以大概
 看出crypto子系统向外提供的API. 整个系统的情况大概是这样的：
 
 

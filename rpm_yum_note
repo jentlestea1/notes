@@ -42,11 +42,17 @@ yum
                                   rpm searchs packages locally.
                                   yum provides fio, we will get:
 
+	Loaded plugins: fastestmirror
+	Loading mirror speeds from cached hostfile
+	fio-3.1-1.el7.aarch64 : Multithreaded IO generation tool
+	Repo        : epel
+
        yum info package       --> show information of one package
        				  e.g. yum info kernel will show all kernel
 				       packages with different versions
 
-       yum list               --> list all packages in related yum repo.
+       yum list package       --> list all version of this package
+
 
 rpmbuild
 --------

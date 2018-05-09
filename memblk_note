@@ -4,3 +4,51 @@ Linux UEFI memory block
 -v0.1 2018/5/9/ Sherlock init
 
 
+D05 CPU and memory hardware topology
+```
+      |||| +--------+  |||| ||||  +---------+  ||||
+      |||| |        |  |||| ||||  |         |  ||||
+      |||| |  CPU   |  |||| ||||  |   CPU   |  ||||
+      |||| |        |  |||| ||||  |         |  ||||
+      |||| +--------+  |||| ||||  +---------+  ||||
+
+
+
+       Dim A        Dim B
+         |     | |    |   | |
+         +---> | | <--+   | |
+               | |        | |
+               | |        | |
+       +-------+-+--------+-+---------+
+       |      ++-+-+     ++-+-+       | <-- CPU
+       |      |ddrc|     |ddrc|       |
+       |     ++----+-+  ++----+-+     |
+       |     |       |  |       |     |
+       |     |       +--+       |     |
+       |     | C Die |  | C Die |     |
+       |     |       +--+       |     |
+       |     |       |  |       |     |
+       |     ++----+-+  ++----+-+ ... |
+       |      |ddrc|     |ddrc|       |
+       |      ++-+-+     ++-+-+       |
+       +-------+-+--------+-+---------+
+               | |        | |
+               | |        | |
+               | |        | |
+               | |        | |
+```
+ACPI SRAT table will discribe this topology. In SRAT table CPU will be discribed
+statically, but memory block will be discribed drynamically. UEFI will detect
+the DDR in the Dims and report memory blocks in SRAT table to OS.
+
+The logic of how UEFI defines a memmroy block is based on specific UEFI. 
+Now D05 UEFI will assigned memory range for each ddrc, e.g. 0 ~ 32G. ddr plugging
+in specific dim will get the cpu address from its ddrc.
+
+D05 UEFI can connect two memory rangs of different ddrc to one memory block and
+report this to OS, if these two memory ranges' ddr is contiguous:
+
+  contiguous:      ddrc 0 ~ 32G, plugging 2 16G ddr.
+
+  not contiguous:  ddrc 0 ~ 32G, plugging 1 16G ddr.
+

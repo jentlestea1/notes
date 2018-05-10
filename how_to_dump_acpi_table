@@ -5,11 +5,11 @@ How to dump acpi tables in CentOS
 
 My system is ARM64 CentOS7.4
 
-1. yum install acpica-tools.aarch64
+1.yum install acpica-tools.aarch64
 
-2. acpidump > acpidump.out 
+2.acpidump > acpidump.out 
   
-3. acpixtract -a acpidump.out
+3.acpixtract -a acpidump.out
 ```
 [root@157 acpi_test]# acpixtract -a acpidump.out
 
@@ -35,7 +35,7 @@ acpidump.out  apic.dat  dbg2.dat  dsdt.dat  facp.dat  gtdt.dat  iort.dat  mcfg.d
 ```
    After this command, you can see related ACPI tables.
 
-4. iasl -d *.dat
+4.iasl -d *.dat
 
 e.g. un-compile mcfg.dat:
 ```
@@ -53,4 +53,4 @@ Formatted output:  mcfg.dsl - 3955 bytes
 mcfg.dsl
 ```
 
-5. Then you can view it: vim mcfg.dsl
+5.Then you can view it: vim mcfg.dsl

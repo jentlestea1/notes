@@ -2,8 +2,10 @@ time in linux
 -------------
 
 
-RTC: real time clock
+RTC: real time clock: hwclock
 
-kernel clock
+kernel clock: date
 
-NTP time server
+NTP time server: ntpdate
+
+chronyd service

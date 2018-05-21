@@ -55,6 +55,9 @@ rpmbuild
 
 		...
 
+	P.S. For linux kernel, you can directly run: "make rpm" to do so,
+	     it will create kernel/kernel-dev/kernel-header rpm packages.
+
 	2. downlaod a rpm, modify it, and re-build a new rpm package
 
 		...
@@ -87,11 +90,3 @@ download source
 
        6. xz -d *
           tar -xf *
-
-compile source to rpm package
------------------------------
-
-	For linux kernel, you can directly run: "make rpm" to do so, it will
-	create kernel/kernel-dev/kernel-header rpm packages.
-
-	But for other packages, to do ...

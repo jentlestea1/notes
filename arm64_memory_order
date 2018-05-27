@@ -2,6 +2,7 @@ ARM64 内存屏障
 --------------
 
 -v0.1 2018/5/21 Sherlock init
+-v0.1 2018/5/27 Sherlock add write sample
 
 
  本文试图梳理aarch64构架下的内存屏障的逻辑，细节的东西还要去看ARMv8的手册。其实，
@@ -36,7 +37,7 @@ ARM64 内存屏障
  可以查阅本文开始时提到的ARM编程手册13章中的内容。
 
  master和slave是芯片里面的概念，master是一个动作的发起者，slave是一个动作的接收
- 者。一般的一个芯片里，master有各个core，已经外设的DMA控制器。slave有内存和MMIO.
+ 者。一般的一个芯片里，master有各个core，以及外设的DMA控制器。slave有内存和MMIO.
 
  基于以上的概念，我们看内存屏障为啥有存在的意义。master(CPU, 不确定DMA是不是这样)
  对normal内存的操作，存在很多提升效率的处理(多发射，乱序执行，执行预取...).
@@ -74,22 +75,19 @@ ARM64 内存屏障
 
   但是，core1的DMA和set flag两个操作可能是乱序执行的，可能在core2看来flags已经
   置位了，但是其实DMA的数据还没有搬完, 这时，如果core2去使用数据，就有可能出错。
-  正确的做法是在DMA和set flag执行加上内存屏障，确保DMA完成了，采取set flag.
+  正确的做法是在DMA和set flag执行加上内存屏障，确保DMA完成了，再去set flag.
   注意，这里其实就是上面的第三点。另外，这里和cache一致性没有关系, 如果，我们
   单独看dma，或者单独看flag，两者各自都是硬件保证cache一致性的。
 
-  具体来说ARMv8上的内存屏障执行有ISB，DMB，DSB...
+  具体来说ARMv8上的内存屏障执行有ISB，DMB，DSB。ISB和指令相关，后面两个和内存
+  访问相关。具体的区别可以查文章开头提到的书。
 
-  ...
+  具体驱动代码, 可以参考下arm64下几组read/write的实现，代码在arch/arm64/include/asm/io.h.
+  可以看到同一个write函数有, 一下三种类型:
 
-  具体驱动代码:
+	__raw_writeb
+	writeb_relaxed(v,c)
+	writeb(v,c)	
 
-  ...
-
-
-
-
-
-
-
-
+  第一个是str指令的封装，第二个用于I/O内存也是str的封装，第三个可以用于normal的
+  内存读写，其实是真是write之前加了一个DSB的内存屏障指令。

@@ -2,7 +2,7 @@ ARM64 内存屏障
 --------------
 
 -v0.1 2018/5/21 Sherlock init
--v0.1 2018/5/27 Sherlock add write sample
+-v0.2 2018/5/27 Sherlock add write sample
 
 
  本文试图梳理aarch64构架下的内存屏障的逻辑，细节的东西还要去看ARMv8的手册。其实，
@@ -83,7 +83,7 @@ ARM64 内存屏障
   访问相关。具体的区别可以查文章开头提到的书。
 
   具体驱动代码, 可以参考下arm64下几组read/write的实现，代码在arch/arm64/include/asm/io.h.
-  可以看到同一个write函数有, 一下三种类型:
+  可以看到同一个write函数有一下三种类型:
 
 	__raw_writeb
 	writeb_relaxed(v,c)
@@ -91,3 +91,5 @@ ARM64 内存屏障
 
   第一个是str指令的封装，第二个用于I/O内存也是str的封装，第三个可以用于normal的
   内存读写，其实是真是write之前加了一个DSB的内存屏障指令。
+
+  未完待续...

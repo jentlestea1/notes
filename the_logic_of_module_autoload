@@ -49,6 +49,22 @@ https://blog.csdn.net/hunanchenxingyu/article/details/38867931
      检查/lib/modules/xxx/modules.dep的文件里的依赖关系，然后调用insmod先加载
      依赖的模块，然后加载需要加载的模块。
 
+     (kernel里module_xxx宏的作用，module_alias?)
+
+
+NOTE
+----
+
+  1. make; make modules_install; make install 过程中怎么生成initramfs
+
+  2. make rpm; yum install kernel.rpm 过程中怎么生成initramfs
+     
+     rpm包的script里应该在install rpm的时候调用了dracut生成对应的initramfs
+
+
+
+
+
 
 
 

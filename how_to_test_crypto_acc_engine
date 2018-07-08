@@ -61,8 +61,8 @@ struct alg_test_desc alg_test_descs[](crypto/testmgr.c)这个数组找到所有�
 可以看到，alg_test_comp函数会调用crypto子系统提供的API做相应算法的测试，比如，
 这里会用crypto_alloc_comp, crypto_comp_compress, crypto_free_comp(comp)
 等crypto API对新注册的支持deflate算法的驱动做测试(假设你写的crypto算法的驱动支持
-deflate算法), 当然使用的压缩，解压缩的数据就是上面deflate_comp_tv_template,
-deflate_decomp_tv_template中。
+deflate算法), 当然测试使用的压缩解压缩的数据就是上面deflate_comp_tv_template,
+deflate_decomp_tv_template中的数据。
 
 但是，这里对于压缩解压缩算法似乎存在一个问题, 那就硬件加速器压缩解压缩得到的
 数据和软件压缩解压缩可能是不一样的。也就是说，你为硬件压缩解压缩写一个crypto的
@@ -94,4 +94,3 @@ deflate_decomp_tv_template中。
 
 	memcmp(decomp_result, src, slen);
 ```
-

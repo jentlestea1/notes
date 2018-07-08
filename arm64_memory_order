@@ -6,7 +6,7 @@ ARM64 内存屏障
 
 
  本文试图梳理aarch64构架下的内存屏障的逻辑，细节的东西还要去看ARMv8的手册。其实，
- <<ARM Cortex-A Series Programmer’s Guide for ARMv8-A>>这本书的第13章，memory
+ "ARM Cortex-A Series Programmer’s Guide for ARMv8-A"这本书的第13章，memory
  order已经对内存屏障的内容做了比较入门的讲解。
 
  要理解内存屏障，要知道memory的一些特性，这里的memory不是只指内存。而是从CPU角度

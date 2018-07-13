@@ -1,0 +1,18 @@
+3814b2d hns: Remove a set-but-not-used variable
+45efce3 RDMA/hns: Update the implementation of set_mac
+dffb715 RDMA/hns: Update the implementation of set_gid
+f52532e RDMA/hns: Add TPQ link table support
+ab09065 RDMA/hns: Add TSQ link table support
+cd1df80 RDMA/hns: Fix endian conversions and annotations
+d153591 IB/hns: Use zeroing memory allocator instead of allocator/memset
+f64bddd RDMA/hns_roce: Don't check return value of zap_vma_ptes()
+bc7cd11 RDMA/hns: Implement the disassociate_ucontext API
+f17b5b4 RDMA/hns: Fix the illegal memory operation when cross page
+cbed5b6 RDMA/hns: Add reset process for RoCE in hip08
+3cb113e RDMA/hns: Increase checking CMQ status timeout value
+ace2ebc RDMA/hns: Modify uar allocation algorithm to avoid bitmap exhaust
+540687f RDMA/hns: Rename the idx field of db
+18893af RDMA/hns: Move the location for initializing tmp_len
+aa98aaa RDMA/hns: Bugfix for cq record db for kernel
+5e376b67 RDMA/hns: Drop local zgid in favor of core defined variable
+85c8cc6 [redhat] kernel-alt-4.14.0-90.el7a

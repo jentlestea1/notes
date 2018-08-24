@@ -1,0 +1,53 @@
+How to do UT test in software
+-----------------------------
+
+-v0.1 2018.8.24 Sherlock init
+
+
+UT test is one kind of basic software test. This document tries to share the
+basic idea about UT test from auther. The idea is not mutual and auther does not
+have much experience about UT.
+
+The idea of UT is to test the logic of your codes match with your plan, it is
+in function level.
+
+Let's see an example function:
+```
+int tested_function(a, b)
+{
+	c = function(a, b);
+	return c;
+}
+```
+Above example is very simple. We can see this tested_function inside is combined
+logic. Every time you set inputs, e.g. a, b here, you get a output c. So the UT
+test of this function is to find proper input combinations to test if return
+value is expected.
+
+However, we have another kind of function which likes timed-based logic. Even
+"input" is same, but it can return different value. The reason of this is
+because there is a memory inside of this kind of function. See blow example:
+```
+int tested_function(a, b)
+{
+	void *c = system_api();
+	function1(global_d);
+	function2(global_e);
+	...
+}
+```
+Everytime you call system_api, its return value is different, as there are some
+memory in this system_api. Everytime you use global_a, global_b, their values
+are different, as the scope of these value is outsibe of this function, so from
+the view of this tested_function, global_d/global_e is memory part.
+
+So for this kind of time-based logic function. Its inputs are a, b, c, global_d,
+global_e. So the UT test is to prepare proper inputs combinations and test if
+return value are expected.
+
+So we should control system_api to create expected c to test our logic in
+tested_function.
+
+Administrator
+Admin@9000
+

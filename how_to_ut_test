@@ -6,7 +6,7 @@ How to do UT test in software
 
 
 UT test is one kind of basic software test. This document tries to share the
-basic idea about UT test from auther. The idea is not mutual and auther does not
+basic idea about UT test from author. The idea is not mutual and author does not
 have much experience about UT.
 
 The idea of UT is to test the logic of your codes match with your plan, it is
@@ -39,7 +39,7 @@ int tested_function(a, b)
 ```
 Everytime you call system_api, its return value is different, as there are some
 memory in this system_api. Everytime you use global_a, global_b, their values
-are different, as the scope of these value is outsibe of this function, so from
+are different, as the scope of these value is outside of this function, so from
 the view of this tested_function, global_d/global_e is memory part.
 
 So for this kind of time-based logic function. Its inputs are a, b, c, global_d,

@@ -1,0 +1,48 @@
+PCI FLR analysis
+----------------
+
+v0.1 2018.9.5 Sherlock init
+
+/* drivers/pci/pci.c */
+pcie_has_flr(struct pci_dev *dev)
+
+/* drivers/pci/pci.c: below tree functions will call __pci_reset_function_locked */
+pci_reset_function(struct pci_dev *dev)
+pci_reset_function_locked(struct pci_dev *dev)
+pci_try_reset_function(struct pci_dev *dev)
+    => __pci_reset_function_locked(struct pci_dev *dev)
+        -> pcie_flr(struct pci_dev *dev)
+
+/* drivers/pci/pci-sysfs.c */
+reset_store
+    -> pci_reset_function(struct pci_dev *dev)
+
+/* drivers/vfio/pci/vfio_pci_config.c */
+vfio_exp_config_write
+    -> pci_try_reset_function
+
+/* drivers/vfio/pci/vfio_pci.c */
+vfio_pci_enable
+vfio_pci_disable
+vfio_pci_ioctl (cmd == VFIO_DEVICE_RESET)
+    => pci_try_reset_function(pdev);
+
+the logic of pci_reset_function and its brother functions are:
+	- reset_prepare
+	- flr operation if supporting flr
+	- reset_done
+
+reset_prepare and reset_done callbacks are stored in pci_driver's pci_error_handlers:
+```
+struct pci_driver {
+	...
+	const struct pci_error_handlers {
+		...
+		void (*reset_prepare)(struct pci_dev *dev);
+		void (*reset_done)(struct pci_dev *dev);
+		...
+	}
+	...
+}
+```
+

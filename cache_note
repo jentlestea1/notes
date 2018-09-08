@@ -15,12 +15,10 @@ cache的存在是为了弥补CPU和内存间性能的gap. 一般的，有数据c
 
 Cache，比如L1 data cache, 可以被细分为cache set，中文叫cache组。cache中的每个
 cache组大小相等, 每个cache组可以包含一定数目的cache line, 一个set里包含的cache
-line的个数和way的数值是一样的，每个cache line会包含一定byte, 比如一个cache line
-32 byte, 64 byte 或者有可能是128 byte. 下面是cache set，way, line的示意图：
-
+line的个数和cache way(中文翻译为“路”)的数值是一样的(后面会讲cache way这个概念)，
+每个cache line 会包含一定byte, 比如一个cache line 32 byte, 64 byte 或者有可能是
+128 byte. 下面是cache set，way, line的示意图：
 ```
-
-
         ---   +---+-----+-----------------------------------+   
 	 ^    | v | tag | cache line                        |  每个组的cache line
          |    +---+-----+-----------------------------------+  的个数也是这个cache
@@ -50,8 +48,28 @@ line的个数和way的数值是一样的，每个cache line会包含一定byte, 
 	      | v | tag | cache line                        |
               +---+-----+-----------------------------------+
 
-              假设这里有S个set
+              假设这里有S个set, 每个cache line包含B个bypt
 ```
+基础概念介绍完了，我们看看一个特定内存地址是怎么被映射到cache中的。假设一个内存
+地址有m位, 那么中间的s位用来对应set的编号，指定去哪个set中找cache, 其中 2^s = S.
+低b bit对应cache line中bypt的偏移, 其中 2^b = B。高 m-s-b bit 就是上面的tag域段。
+```
+               tag(m-s-b)       index(s bit)        offset(b bit)
+             |            |                      |                |
+             |<---------->|<-------------------->|<-------------->|
+             |            |                      |                |
+```
+去找一个内存地址对应的cache时，首先根据index域的值, 找到相应的cache set。然后
+根据内存地址tag域的值和cache里tag的值匹配，找到相应的cache line。至于怎么找到
+匹配的cache line, 以及找不到匹配的cache line的时候的cache line替换策略, 本文将
+不去涉及, 这个主题涉及的范围远超过本文的内容。找到对应的cache line后, 再根据
+offset的值找到对应的byte。
+
+有了上述的铺垫，现在可以讲清全相连cache，组相连cache，直接映射cache这几个概念了。
+直接映射cache就是只有一个set的cache; 全相连cache就是一个set里只有一个cache line
+的cache; 组相连cache就是一个set里有多个cache line的cache。
+
+在
 
 ```
 
@@ -84,8 +102,4 @@ line的个数和way的数值是一样的，每个cache line会包含一定byte, 
                             +---+-----+-----------------------------------+  ---
  
 ```
-
-
-
-
 

@@ -9,6 +9,9 @@ Hardware: D05 board.
 System: Linux 157 4.11.0-45.el7.aarch64 aarch64 GNU/Linux
 		CentOS Linux release 7.4.1708 (AltArch) 
 	
+0. download dpdk codes
+	git clone git://dpdk.org/dpdk
+
 1. install kernel header files
 	yum install kernel-headers.aarch64
 
@@ -26,7 +29,7 @@ System: Linux 157 4.11.0-45.el7.aarch64 aarch64 GNU/Linux
 
 	"make install T=arm64-armv8a-linuxapp-gcc" will create a directory
 	named as arm64-armv8a-linuxapp-gcc under dpdk and put compiled files
-	in it. 
+	in it.
 
 5. build the dpdk helloworld example:
 
@@ -41,10 +44,9 @@ System: Linux 157 4.11.0-45.el7.aarch64 aarch64 GNU/Linux
 6. test helloworld in above build:
 
 	(1) enable hugepage
-		echo 2 > /sys/kernel/mm/hugepages/hugepages-524288kB/nr_hugepages
-		
-		grep -i huge /proc/meminfo
 ```
+		echo 2 > /sys/kernel/mm/hugepages/hugepages-524288kB/nr_hugepages
+		grep -i huge /proc/meminfo
 		AnonHugePages:         0 kB
 		ShmemHugePages:        0 kB
 		HugePages_Total:       2

@@ -4,11 +4,8 @@ set autoindent
 set smartindent
 set smarttab
 set tabstop=8
-set expandtab
 set showmatch
 set cc=80
-
-colorscheme murphy
 
 " call pathogen#infect()
 
@@ -30,6 +27,8 @@ set t_Co=256
 
 syntax enable
 syntax on
+
+color murphy
 
 " about Taglist plugin
 let Tlist_Show_One_File = 1            
@@ -70,3 +69,5 @@ noremap <C-@>i :cs find i ^<C-R>=expand("<cword>")<CR>$<CR>
 " set autochdir
 set tags=tags;
 " cs add /home/wangzhou/linux/cscope.out
+
+noremap <F8> :TlistToggle<CR>

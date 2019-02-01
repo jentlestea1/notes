@@ -1,21 +1,57 @@
-int callee(int a, int b, int *c)
+int g;
+
+struct e {
+	int a;
+	int b;
+	int c;
+};
+
+struct f {
+	int a;
+	int b;
+	int c;
+};
+
+int callee2(int d)
+{
+	return d + 5;
+}
+
+int callee(int a, int *b, int *c)
 {
 	int sum;	
 
-	sum = a + b;
+	sum = a + *b;
 	*c = sum;
 
-	return sum;
+	return callee2(sum);
+}
+
+int callee3(struct e *e)
+{
+	return (e->a + e->b + e->c);
+}
+
+int callee4(struct f f)
+{
+	return (f.a + f.b + f.c);
 }
 
 void caller(void)
 {
-	int p_a = 1;
-	int p_b = 2;
-	int p_c = 0;
-	int p_sum = 0;
+	int a = 1;
+	int b = 2;
+	int c;
+	int sum = 0;
+	int sum_3 = 0;
+	int sum_4 = 0;
 
-	p_sum = callee(p_a, p_b, &p_c);	
+	struct e e = { .a = 4, .b = 5, .c = 6};
+	struct f f = { .a = 4, .b = 5, .c = 6};
+
+	sum = callee(a, &b, &c);
+	sum_3 = callee3(&e);
+	sum_4 = callee4(f);
 }
 
 void call_0(void)

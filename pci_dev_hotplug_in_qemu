@@ -1,0 +1,32 @@
+qemu里pci设备的热插拔
+---------------------
+
+-v0.1 2019.2.17 Sherlock init
+
+本文讨论linux系统中pci设备直通给qemu中涉及的pci热插拔问题。
+
+场景是一个pcie设备的vf通过vfio直通给qemu使用，这时如果我们在host上通过sysfs把
+对应的vf disable掉。
+
+正常来讲，qemu里的vf pci设备会表现为一个pci设备热拔出的行为。与之相对应的设置为：
+
+ 1. guest kernel的配置里要打开pci hotplug: CONFIG_HOTPLUG_PCI_PCIE.
+
+ 2. guest kernel的启动cmdline里要是能pci native hotplug, 加上pcie=native(fix me)
+
+ 3. 启动qemu的时候，需要把直通上来的pci vf挂到一个支持pci热插拔的pci桥下面:
+    比如在qemu里挂接一个ioh3420(fix me)的pci桥，然后再把直通的vf挂在这个桥下。
+
+ 4. 本文的测试是在主线linux v5.0-rc6上做的，这个版本有一个pci hotplug的bug，这个
+    bug会导致虚拟机里vf无法被热拔。相关的fix补丁已经被pci maintainer ack, 会合
+    入v5.1主线版本。如果是在v5.0, 以及之前的内核的版本上测试，需要确认这个补丁
+    是否合入:
+    (fix me)
+
+ 综合以上，如下的qemu启动命令，配合正确的kernel，可以支持qemu里直通vf的pci热拔
+ 操作:
+    (fix me)
+
+
+具体可以这样测试:
+    

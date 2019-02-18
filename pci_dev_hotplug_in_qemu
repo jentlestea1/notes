@@ -28,5 +28,19 @@ qemu里pci设备的热插拔
     (fix me)
 
 
-具体可以这样测试:
+具体可以这样测试:(已HiSilicon D06 zip engine为例)
+
+ 1. 在host上把vf和vfio驱动绑定:
+    (fix me)
+ 
+ 2. 启动qemu: 
+    (fix me)
+
+ 3. 在host上disable vf:
+    (fix me)
     
+ 可以看到在qemu里，vf表现为一个pci热拔的动作:
+    (fix me: add log)
+
+为了使得这篇介绍完整，对于qemu里pci设备的热插，可以这样来做:
+    (fix me: how to do)

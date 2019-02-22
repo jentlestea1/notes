@@ -53,13 +53,14 @@ qemu里pci设备的热插拔
     
  可以看到在qemu里，vf表现为一个pci热拔的动作:
 ```
-    (fix me: add log)
+    (fix me: add log, 目前看上面的命令会在host上挂住)
 ```
 
 为了使得这篇介绍完整，对于qemu里pci设备的热插，可以这样来做:
 
- 1. 启动qemu后按ctrl a + c 进入qemu monitor
+ 1. 启动qemu后按ctrl a + c 进入qemu monitor(启动qemu的时候带ioh3420但是不带VF设备)
 
- 2. device_add vfio-pci,host=0000:75:00.1
+ 2. 在qemu monitor里: device_add vfio-pci,host=0000:75:00.1,bus=root_port
 
  这样可以把已经和vfio驱动绑定的VF PCI热插到qemu
+ (fix me: lspci开不到新设备，但是在qemu monitor里info pci可以看到新插入的设备)

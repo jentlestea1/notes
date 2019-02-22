@@ -57,4 +57,9 @@ qemu里pci设备的热插拔
 ```
 
 为了使得这篇介绍完整，对于qemu里pci设备的热插，可以这样来做:
-    (fix me: how to do)
+
+ 1. 启动qemu后按ctrl a + c 进入qemu monitor
+
+ 2. device_add vfio-pci,host=0000:75:00.1
+
+ 这样可以把已经和vfio驱动绑定的VF PCI热插到qemu

@@ -63,4 +63,4 @@ qemu里pci设备的热插拔
  2. 在qemu monitor里: device_add vfio-pci,host=0000:75:00.1,bus=root_port
 
  这样可以把已经和vfio驱动绑定的VF PCI热插到qemu
- (fix me: lspci开不到新设备，但是在qemu monitor里info pci可以看到新插入的设备)
+ (fix me: lspci看不到新设备，但是在qemu monitor里info pci可以看到新插入的设备)

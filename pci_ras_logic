@@ -13,4 +13,4 @@ v5.0-rc6里pci aer的处理逻辑是，当pf有aer时会扫描pf父总线下的�
 基于上面的逻辑，如果正好有vf通过vfio驱动直通到qemu, 那么vfio-pci驱动里的
 pci_driver->err_handler->err_detected(具体函数是: vfio_pci_aer_err_detected)
 将被调用到。vfio中的err_detected函数向qemu发一个eventfd消息。qemu收到该消息的
-时候会终止进程(abort)
+时候会终止qemu进程(abort)

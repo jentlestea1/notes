@@ -11,12 +11,12 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="210mm"
-   height="297mm"
-   viewBox="0 0 210 297"
+   width="325.71301"
+   height="376.37845"
+   viewBox="0 0 91.923451 106.22236"
    version="1.1"
    id="svg34474"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="test_dev_state.svg">
   <defs
      id="defs34468">
@@ -100,17 +100,22 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="222.35243"
-     inkscape:cy="718.38039"
+     inkscape:zoom="1.4"
+     inkscape:cx="113.75912"
+     inkscape:cy="183.85636"
      inkscape:document-units="mm"
      inkscape:current-layer="g27062-5"
      showgrid="false"
-     inkscape:window-width="1632"
-     inkscape:window-height="926"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1" />
+     inkscape:window-width="1539"
+     inkscape:window-height="876"
+     inkscape:window-x="61"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     units="mm"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata34471">
     <rdf:RDF>
@@ -119,14 +124,15 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-49.712134,-44.697566)">
     <g
        transform="matrix(0.7043574,0,0,0.79550416,0.81869397,-32.317406)"
        id="g27062">
@@ -134,22 +140,26 @@
          id="path3755-51-1-92"
          cx="97.874535"
          cy="134.44199"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient6771-2-4-3);stroke-width:1"
-         r="10.022608">
+         style="fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient6771-2-4-3);stroke-width:1"
+         r="10.022608"
+         d="m 107.89714,134.44199 c 0,5.53533 -4.48727,10.0226 -10.022605,10.0226 -5.535334,0 -10.022608,-4.48727 -10.022608,-10.0226 0,-5.53534 4.487274,-10.02261 10.022608,-10.02261 5.535335,0 10.022605,4.48727 10.022605,10.02261 z"
+         sodipodi:cx="97.874535"
+         sodipodi:cy="134.44199"
+         sodipodi:rx="10.022608"
+         sodipodi:ry="10.022608">
         <title
            id="title6795-4-4-0">init</title>
       </circle>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.03145266px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
+         style="font-size:4.03145266px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:1.25;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal'"
          x="91.256493"
          y="135.8652"
          id="text8485-2-4-5"><tspan
            sodipodi:role="line"
            id="tspan8483-5-4-3"
            x="91.256493"
-           y="135.8652"
-           style="stroke-width:0.26458335"> 初始化</tspan></text>
+           y="135.8652"> 初始化</tspan></text>
     </g>
     <g
        transform="matrix(0.7043574,0,0,0.79550416,63.092493,-32.317406)"
@@ -158,22 +168,26 @@
          id="path3755-51-1-92-4"
          cx="97.874535"
          cy="134.44199"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient6771-2-4-3-7);stroke-width:1"
-         r="10.022608">
+         style="fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient6771-2-4-3-7);stroke-width:1"
+         r="10.022608"
+         d="m 107.89714,134.44199 c 0,5.53533 -4.48727,10.0226 -10.022605,10.0226 -5.535334,0 -10.022608,-4.48727 -10.022608,-10.0226 0,-5.53534 4.487274,-10.02261 10.022608,-10.02261 5.535335,0 10.022605,4.48727 10.022605,10.02261 z"
+         sodipodi:cx="97.874535"
+         sodipodi:cy="134.44199"
+         sodipodi:rx="10.022608"
+         sodipodi:ry="10.022608">
         <title
            id="title6795-4-4-0-6">init</title>
       </circle>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.03145266px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
+         style="font-size:4.03145266px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:1.25;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal'"
          x="89.817535"
          y="135.84946"
          id="text8485-2-4-5-9"><tspan
            sodipodi:role="line"
            id="tspan8483-5-4-3-9"
            x="89.817535"
-           y="135.84946"
-           style="stroke-width:0.26458335">正常工作</tspan></text>
+           y="135.84946">正常工作</tspan></text>
     </g>
     <g
        transform="matrix(0.7043574,0,0,0.79550416,32.089229,13.385683)"
@@ -182,29 +196,38 @@
          id="path3755-51-1-92-2"
          cx="97.874535"
          cy="134.44199"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient6771-2-4-3-75);stroke-width:1"
-         r="10.022608">
+         style="fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient6771-2-4-3-75);stroke-width:1"
+         r="10.022608"
+         d="m 107.89714,134.44199 c 0,5.53533 -4.48727,10.0226 -10.022605,10.0226 -5.535334,0 -10.022608,-4.48727 -10.022608,-10.0226 0,-5.53534 4.487274,-10.02261 10.022608,-10.02261 5.535335,0 10.022605,4.48727 10.022605,10.02261 z"
+         sodipodi:cx="97.874535"
+         sodipodi:cy="134.44199"
+         sodipodi:rx="10.022608"
+         sodipodi:ry="10.022608">
         <title
            id="title6795-4-4-0-7">init</title>
       </circle>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.03145266px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335"
+         style="font-size:4.03145266px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:1.25;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal'"
          x="93.843079"
          y="135.85339"
          id="text8485-2-4-5-8"><tspan
            sodipodi:role="line"
            id="tspan8483-5-4-3-5"
            x="93.843079"
-           y="135.85339"
-           style="stroke-width:0.26458335">复位</tspan></text>
+           y="135.85339">复位</tspan></text>
       <ellipse
-         style="opacity:1;fill:#000000;fill-opacity:1;stroke-width:1.33592546;stroke-miterlimit:4;stroke-dasharray:none"
+         style="fill:#000000;fill-opacity:1;stroke-width:1.33592546;stroke-miterlimit:4;stroke-dasharray:none"
          id="path34548"
          cx="28.434896"
          cy="42.552818"
          rx="3.4150641"
-         ry="3.1917627" />
+         ry="3.1917627"
+         d="m 31.849961,42.552818 c 0,1.762762 -1.528977,3.191763 -3.415065,3.191763 -1.886087,0 -3.415064,-1.429001 -3.415064,-3.191763 0,-1.762762 1.528977,-3.191762 3.415064,-3.191762 1.886088,0 3.415065,1.429 3.415065,3.191762 z"
+         sodipodi:cx="28.434896"
+         sodipodi:cy="42.552818"
+         sodipodi:rx="3.4150641"
+         sodipodi:ry="3.1917627" />
       <g
          id="g35148">
         <ellipse
@@ -213,14 +236,24 @@
            cy="168.12347"
            cx="150.23886"
            id="path34548-8"
-           style="opacity:1;fill:#000000;fill-opacity:1;stroke-width:1.33592546;stroke-miterlimit:4;stroke-dasharray:none" />
+           style="fill:#000000;fill-opacity:1;stroke-width:1.33592546;stroke-miterlimit:4;stroke-dasharray:none"
+           d="m 153.65393,168.12347 c 0,1.76277 -1.52898,3.19177 -3.41507,3.19177 -1.88609,0 -3.41506,-1.429 -3.41506,-3.19177 0,-1.76276 1.52897,-3.19176 3.41506,-3.19176 1.88609,0 3.41507,1.429 3.41507,3.19176 z"
+           sodipodi:cx="150.23886"
+           sodipodi:cy="168.12347"
+           sodipodi:rx="3.4150641"
+           sodipodi:ry="3.1917627" />
         <ellipse
            ry="4.4516687"
            rx="4.9328704"
            cy="168.12347"
            cx="150.23886"
            id="path34565"
-           style="opacity:1;fill:url(#linearGradient35144);fill-opacity:1;fill-rule:evenodd;stroke:url(#linearGradient35138);stroke-width:0.66796273;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+           style="fill:url(#linearGradient35144);fill-opacity:1;fill-rule:evenodd;stroke:url(#linearGradient35138);stroke-width:0.66796273;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+           d="m 155.17173,168.12347 c 0,2.45859 -2.20852,4.45167 -4.93287,4.45167 -2.72435,0 -4.93287,-1.99308 -4.93287,-4.45167 0,-2.45858 2.20852,-4.45166 4.93287,-4.45166 2.72435,0 4.93287,1.99308 4.93287,4.45166 z"
+           sodipodi:cx="150.23886"
+           sodipodi:cy="168.12347"
+           sodipodi:rx="4.9328704"
+           sodipodi:ry="4.4516687" />
       </g>
       <path
          style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"

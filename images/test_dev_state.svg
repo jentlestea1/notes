@@ -17,9 +17,22 @@
    version="1.1"
    id="svg34474"
    inkscape:version="0.48.4 r9939"
-   sodipodi:docname="test_dev_state.svg">
+   sodipodi:docname="test_dev_state.png">
   <defs
      id="defs34468">
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lend"
+       style="overflow:visible;">
+      <path
+         id="path4066"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
     <linearGradient
        id="linearGradient35142"
        osb:paint="solid">
@@ -100,9 +113,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="113.75912"
-     inkscape:cy="183.85636"
+     inkscape:zoom="1.979899"
+     inkscape:cx="165.26543"
+     inkscape:cy="189.69894"
      inkscape:document-units="mm"
      inkscape:current-layer="g27062-5"
      showgrid="false"
@@ -124,7 +137,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -256,41 +269,125 @@
            sodipodi:ry="4.4516687" />
       </g>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35402025;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;marker-end:url(#Arrow1Lend)"
          d="m 29.971887,44.116641 18.24527,23.519453"
          id="path35150"
          inkscape:connector-curvature="0" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35346361999999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
          d="M 62.974358,73.456564 H 132.19906"
          id="path35152"
          inkscape:connector-curvature="0" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35346361999999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
          d="M 137.3375,85.725606 105.08411,127.05054"
          id="path35154"
          inkscape:connector-curvature="0" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35346361999999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
          d="M 57.273215,86.733532 91.423858,125.70664"
          id="path35156"
          inkscape:connector-curvature="0" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35346361999999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
          d="m 143.60235,87.116848 7.24445,76.260042"
          id="path35158"
          inkscape:connector-curvature="0" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35346361999999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
          d="m 104.56284,141.758 41.32017,24.23216"
          id="path35160"
          inkscape:connector-curvature="0" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.35346362px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.35346361999999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)"
          d="m 45.320489,83.205795 c 0,0 -2.706734,33.461435 4.142774,48.495695 5.226994,11.47294 10.377734,20.27526 26.725326,28.59164 16.347593,8.31637 70.255751,10.26617 70.255751,10.26617"
          id="path35168"
          inkscape:connector-curvature="0"
          sodipodi:nodetypes="cazc" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880775px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="37.759499"
+         y="55.005211"
+         id="text3287"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289"
+           x="37.759499"
+           y="55.005211">设备初始化/创建设备</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880799px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="71.615021"
+         y="72.895538"
+         id="text3287-8"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289-7"
+           x="71.615021"
+           y="72.895538">start_dev/config</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880799px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="60.063961"
+         y="98.239746"
+         id="text3287-8-7"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289-7-1"
+           x="60.063961"
+           y="98.239746">reset信号/设置reset flag</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880799px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="31.690212"
+         y="169.84061"
+         id="text3287-8-1"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289-7-6"
+           x="31.690212"
+           y="169.84061">uninit/释放设备资源</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880799px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="89.961128"
+         y="169.65018"
+         id="text3287-8-4"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289-7-8"
+           x="89.961128"
+           y="169.65018">关闭设备/释放资源</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880799px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="108.24221"
+         y="144.51372"
+         id="text3287-8-3"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289-7-3"
+           x="108.24221"
+           y="144.51372">关闭设备/释放资源</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.65880799px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         x="71.627525"
+         y="112.47165"
+         id="text3287-8-7-0"
+         sodipodi:linespacing="125%"
+         transform="scale(1.0627343,0.94096898)"><tspan
+           sodipodi:role="line"
+           id="tspan3289-7-1-2"
+           x="71.627525"
+           y="112.47165">reset信号/设置reset flag</tspan></text>
     </g>
   </g>
 </svg>

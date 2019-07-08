@@ -1,6 +1,3 @@
-1. current GIC ITS code in v4.2/v4.3 
-2. msi domain struct
-3. pci msi struct 
-4. ITS hardware 
-
-
+1. lock使用笔记
+2. 信号使用笔记 APUE10
+3. APUE789 11 12 13

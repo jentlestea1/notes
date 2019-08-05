@@ -1,0 +1,13 @@
+perf note
+---------
+
+-v0.1 2019.8.5 Sherlock init
+
+git clone https://github.com/brendangregg/FlameGraph
+
+perf record -a -g -F 100
+perf script > out.perf
+
+cp out.perf ~/repos/FlameGraph/
+./stackcollapse-perf.pl out.perf > out.folded
+./flamegraph.pl out.folded > out.svg

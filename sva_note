@@ -127,7 +127,7 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
    PCI设备和平台设备的硬件缺页流程有一些差异，下面分别介绍。对于PCI设备，ATS, 
    PRI和PASID的概念同时存在于PCIe和SMMU规范中。对于ATS的介绍可以参考这里:
    https://blog.csdn.net/scarecrow_byr/article/details/74276940。简单讲，ATS特性
-   又设备侧的ATC和SMMU侧的ATS同时支持，其目的是在设备中缓存va对应的pa，设备随后
+   由设备侧的ATC和SMMU侧的ATS同时支持，其目的是在设备中缓存va对应的pa，设备随后
    使用pa做内存访问时无需经过SMMU页表转换，可以提高性能。PRI(page request
    interface)也是需要设备和SMMU一起工作，PCIe设备可以发出缺页请求，SMMU硬件在解
    析到缺页请求后可以直接将缺页请求写入PRI queueu, 软件在建立好页表后，可以通过
@@ -150,17 +150,81 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
 
    可以注意到PRI和stall模式完成缺页的区别是，PRI缺页的时候并不是在IO实际发生的
    时候，因为如果PRI response表示PRI请求失败，硬件完全可以不发起后续的IO操作。
-   而stall模式，完全发生在IO请求的途中。
+   而stall模式，完全发生在IO请求的途中。所以，他被叫做stall模式。
 
 2. 数据结构
 -----------
+```
+   struct device
+   	+-> struct iommu_param
+   		+-> struct iommu_fault_param
+   			+-> handler(struct iommu_fault, void *)
+			+-> faults list
+        	+-> struct iopf_device_param
+			+-> struct iopf_queue
+				+-> work queue
+				+-> devices list
+			+-> wait queue
+       		+-> struct iommu_sva_param
+```
+```
+  struct iommu_bond
+	+-> struct iommu_sva
+		+-> device
+		+-> struct iommu_sva_ops
+			+-> iommu_mmu_exit_handle ?
+	+-> struct io_mm
+		+-> pasid
+		+-> device list
+		+-> mm
+		+-> mmu_notifier
+		+-> iommu_ops
+			+-> attach
+			+-> dettach
+			+-> invalidat
+			+-> release
+	+-> mm list
+	+-> device list
+	+-> wait queue
+```
+  相关接口:
+```
+    - iommu_sva_bind_device: 将设备和mm绑定, 该接口可以在设备驱动里调用，把一个
+                             设备和mm绑定在一起。
 
+    - iommu_dev_enable_feature: 准备和sva相关的smmu中的管理结构, 该接口可以在
+    				设备驱动力调用，用来使能sva的功能。
+      +-> arm_smmu_dev_enable_feature
+          +-> arm_smmu_dev_enable_sva
+	    +-> iommu_sva_enable
+	      +-> iommu_register_device_fault_handler(dev, iommu_queue_iopf, dev) /* fix me: 动态部分将执行 */
+                  把iommu_queue_iopf赋值给iommu_fault_param里的handler	          
+	    +-> iopf_queue_add_device(struct iopf_queue, dev)
+		把相应的iopf_queue赋值给iopf_device_param里的iopf_queue, 这里有
+		pri对应的iopf_queue或者是stall mode对应的iopf_queue。初始化
+		iopf_device_param里的wait queue
+
+		对应iopf_queue的初始化在在smmu驱动probe流程中: e.g.
+		arm_smmu_init_queues
+		  +-> smmu->prq.iopf = iopf_queue_alloc
+		  		         +-> alloc_workqueue
+					     分配以及初始化iopf_queue里的工作队列
+	    +-> arm_smmu_enable_pri
+	        调用PCI函数是能EP设备的PRI功能
+```
 3. 动态分析
 -----------
+
+	(to do: ...)
+
 
 4. 性能分析
 -----------
 
+	(to do: ...)
+
+
 5. 虚拟化
 ---------
 
+	(to do: ...)

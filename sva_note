@@ -2,7 +2,7 @@ Linux SVA特性分析
 =================
 
 -v0.1 2019.9.15 Sherlock init
--v0.2 2019.9.18 Sherlock 完成数据结构和动态分析
+-v0.2 2019.9.18 Sherlock update数据结构和动态分析
 
 简介: 最近Linux社区在上传SVA特性(share virtual memory), 简单讲这个特性可以达到
 这样的功能，就是可以是设备直接使用进程里的虚拟地址。如果把设备操作映射到用户态，
@@ -47,7 +47,7 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
   DMA操作在用户态就可以完成。
 
   可以注意到，SVA可以支持功能很大一部分取决于设备的功能，SVA就是提供一个进程和
-  设备一直的虚拟地址空间，其他的设备想怎么用都可以。如上，如果设备做的足够强，
+  设备一致的虚拟地址空间，其他的设备想怎么用都可以。如上，如果设备做的足够强，
   设备完全可以执行va上对应的代码。
 
   可以看到，设备完全可以把自身的资源分配给不同的进程同时使用。
@@ -294,7 +294,29 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
 
     当一个PRI或者是一个stall event上报后, 软件会在缺页流程里建立页表，然后控制
     SMMU给设备返送reponse信息。我们可以从SMMU PRI queue或者是event queue的中断
-    处理流程入手跟踪:
+    处理流程入手跟踪: e.g.PRI中断流程
+
+    devm_request_threaded_irq(..., arm_smmu_priq_thread, ...)
+    arm_smmu_priq_thread
+      +-> arm_smmu_handle_ppr
+        +-> iommu_report_device_fault
+	  +-> iommu_fault_param->handler
+	    +-> iommu_queue_iopf /* 初始化参见上面第2部分 */
+	      +-> iopf_group = kzalloc
+	      +-> list_add(faults list in group, fault)
+	      +-> INIT_WORK(&group->work, iopf_handle_group)
+	      +-> queue_work(iopf_param->queue->wq, &group->work)
+	      这段代码创建缺页的group，并把当前的缺页请求挂入group里的链表，然后
+	      创建一个任务，并调度这个任务运行
+
+	      在工作队列线程中:
+	      +-> iopf_handle_group
+	        +-> iopf_handle_single
+		  +-> handle_mm_fault
+	              这里会最终申请内存并建立页表
+
+	+-> arm_smmu_page_response
+	    软件执行完缺页流程后，软件控制SMMU向设备回响应。
 
   - Invalid流程
 

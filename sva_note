@@ -24,7 +24,7 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
 ```
              
     +------------------+     +----------------+
-    |   进程           |     |  进程	      | 	...
+    |   进程           |     |  进程          |       ...
     |                  |     |                |
     | va = malloc();   |     |                |
     | set dma dst: va  |     |                |
@@ -32,13 +32,13 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
     +------+ mmap io +-+     +----------------+
  <---------+         +------------------------------------------> 
            +---------+
-			内核
+                        内核
 
  <--------------------------------------------------------------> 
                 +--------------+
                 |  DMA dst: va |
                 |              |
-		|  设备        |
+                |  设备        |
                 +--------------+
 ```
   如上图所示，在SVA的支持下，我们可以在用户态进程malloc一段内存，然后把得到va
@@ -157,36 +157,36 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
 -----------
 ```
    struct device
-   	+-> struct iommu_param
-   		+-> struct iommu_fault_param
-   			+-> handler(struct iommu_fault, void *)
-			+-> faults list
-        	+-> struct iopf_device_param
-			+-> struct iopf_queue
-				+-> work queue
-				+-> devices list
-			+-> wait queue
-       		+-> struct iommu_sva_param
+           +-> struct iommu_param
+                   +-> struct iommu_fault_param
+                           +-> handler(struct iommu_fault, void *)
+                           +-> faults list
+                   +-> struct iopf_device_param
+                        +-> struct iopf_queue
+                                +-> work queue
+                                +-> devices list
+                        +-> wait queue
+                   +-> struct iommu_sva_param
 ```
 ```
   struct iommu_bond
-	+-> struct iommu_sva
-		+-> device
-		+-> struct iommu_sva_ops
-			+-> iommu_mmu_exit_handle ?
-	+-> struct io_mm
-		+-> pasid
-		+-> device list
-		+-> mm
-		+-> mmu_notifier
-		+-> iommu_ops
-			+-> attach
-			+-> dettach
-			+-> invalidat
-			+-> release
-	+-> mm list
-	+-> device list
-	+-> wait queue
+        +-> struct iommu_sva
+                +-> device
+                +-> struct iommu_sva_ops
+                        +-> iommu_mmu_exit_handle ?
+        +-> struct io_mm
+                +-> pasid
+                +-> device list
+                +-> mm
+                +-> mmu_notifier
+                +-> iommu_ops
+                        +-> attach
+                        +-> dettach
+                        +-> invalidat
+                        +-> release
+        +-> mm list
+        +-> device list
+        +-> wait queue
 ```
   相关接口:
 ```
@@ -194,46 +194,46 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
                              设备和mm绑定在一起。返回struct iommu_sva *
       +-> iommu_sva_bind_group
         +-> iommu_group_do_bind_dev
-	  +-> arm_smmu_sva_bind
-	    +-> arm_smmu_alloc_shared_cd(mm)
-	        分配相应的CD表项，并且把CD表项里的页表地址指向mm里保存的进程页表
-		地址。这个函数主要配置SMMU的硬件
-	    +-> iommu_sva_bind_generic(dev, mm, cd, &arm_smmu_mm_ops, drvdata)
-	      +-> io_mm_alloc
-	          分配io_mm以及初始化其中的数据域段, 向mm注册io_mm的notifier
-		  /* to do: mm发生变化的时候通知io_mm */
-		  +-> mmu_notifier_register
-	      +-> io_mm_attach
-	        +-> init_waitqueue_head
-		    初始化iommu_bond里的等待队列mm_exit_wq /* to do: 作用 */
-		+-> io_mm->ops->attach(bond->sva.dev, io_mm->pasid, io_mm->ctx)
-		    调用e.g.SMMU arm_smmu_mm_ops里的attach函数
-		    +-> arm_smmu_mm_attach
-		      +-> __arm_smmu_write_ctx_desc
-		        下发SMMU command使能CD配置。可以看到arm_smmu_mm_ops里的
-			这一组回调函数基本都是下发SMMU命令控制CD/ATC/TLB相关的
-			配置
+          +-> arm_smmu_sva_bind
+            +-> arm_smmu_alloc_shared_cd(mm)
+                分配相应的CD表项，并且把CD表项里的页表地址指向mm里保存的进程页表
+                地址。这个函数主要配置SMMU的硬件
+            +-> iommu_sva_bind_generic(dev, mm, cd, &arm_smmu_mm_ops, drvdata)
+              +-> io_mm_alloc
+                  分配io_mm以及初始化其中的数据域段, 向mm注册io_mm的notifier
+                  /* to do: mm发生变化的时候通知io_mm */
+                  +-> mmu_notifier_register
+              +-> io_mm_attach
+                +-> init_waitqueue_head
+                    初始化iommu_bond里的等待队列mm_exit_wq /* to do: 作用 */
+                +-> io_mm->ops->attach(bond->sva.dev, io_mm->pasid, io_mm->ctx)
+                    调用e.g.SMMU arm_smmu_mm_ops里的attach函数
+                    +-> arm_smmu_mm_attach
+                      +-> __arm_smmu_write_ctx_desc
+                        下发SMMU command使能CD配置。可以看到arm_smmu_mm_ops里的
+                        这一组回调函数基本都是下发SMMU命令控制CD/ATC/TLB相关的
+                        配置
 
     - iommu_dev_enable_feature: 准备和sva相关的smmu中的管理结构, 该接口可以在
-    				设备驱动力调用，用来使能sva的功能
+                                    设备驱动力调用，用来使能sva的功能
       +-> arm_smmu_dev_enable_feature
           +-> arm_smmu_dev_enable_sva
-	    +-> iommu_sva_enable
-	      +-> iommu_register_device_fault_handler(dev, iommu_queue_iopf, dev)
-	          /* to do: 动态部分将执行 */
-                  把iommu_queue_iopf赋值给iommu_fault_param里的handler	          
-	    +-> iopf_queue_add_device(struct iopf_queue, dev)
-		把相应的iopf_queue赋值给iopf_device_param里的iopf_queue, 这里有
-		pri对应的iopf_queue或者是stall mode对应的iopf_queue。初始化
-		iopf_device_param里的wait queue
+            +-> iommu_sva_enable
+              +-> iommu_register_device_fault_handler(dev, iommu_queue_iopf, dev)
+                  /* to do: 动态部分将执行 */
+                  把iommu_queue_iopf赋值给iommu_fault_param里的handler                  
+            +-> iopf_queue_add_device(struct iopf_queue, dev)
+                把相应的iopf_queue赋值给iopf_device_param里的iopf_queue, 这里有
+                pri对应的iopf_queue或者是stall mode对应的iopf_queue。初始化
+                iopf_device_param里的wait queue
 
-		对应iopf_queue的初始化在在smmu驱动probe流程中: e.g.
-		arm_smmu_init_queues
-		  +-> smmu->prq.iopf = iopf_queue_alloc
-		  		         +-> alloc_workqueue
-					     分配以及初始化iopf_queue里的工作队列
-	    +-> arm_smmu_enable_pri
-	        调用PCI函数是能EP设备的PRI功能
+                对应iopf_queue的初始化在在smmu驱动probe流程中: e.g.
+                arm_smmu_init_queues
+                  +-> smmu->prq.iopf = iopf_queue_alloc
+                                           +-> alloc_workqueue
+                                             分配以及初始化iopf_queue里的工作队列
+            +-> arm_smmu_enable_pri
+                调用PCI函数是能EP设备的PRI功能
 ```
   需要使用SVA特性的社区驱动在调用上面的接口后，可以建立起静态的数据结构。
 
@@ -295,43 +295,43 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
     当一个PRI或者是一个stall event上报后, 软件会在缺页流程里建立页表，然后控制
     SMMU给设备返送reponse信息。我们可以从SMMU PRI queue或者是event queue的中断
     处理流程入手跟踪: e.g.PRI中断流程
-
+```
     devm_request_threaded_irq(..., arm_smmu_priq_thread, ...)
     arm_smmu_priq_thread
       +-> arm_smmu_handle_ppr
         +-> iommu_report_device_fault
-	  +-> iommu_fault_param->handler
-	    +-> iommu_queue_iopf /* 初始化参见上面第2部分 */
-	      +-> iopf_group = kzalloc
-	      +-> list_add(faults list in group, fault)
-	      +-> INIT_WORK(&group->work, iopf_handle_group)
-	      +-> queue_work(iopf_param->queue->wq, &group->work)
-	      这段代码创建缺页的group，并把当前的缺页请求挂入group里的链表，然后
-	      创建一个任务，并调度这个任务运行
+          +-> iommu_fault_param->handler
+            +-> iommu_queue_iopf /* 初始化参见上面第2部分 */
+              +-> iopf_group = kzalloc
+              +-> list_add(faults list in group, fault)
+              +-> INIT_WORK(&group->work, iopf_handle_group)
+              +-> queue_work(iopf_param->queue->wq, &group->work)
+              这段代码创建缺页的group，并把当前的缺页请求挂入group里的链表，然后
+              创建一个任务，并调度这个任务运行
 
-	      在工作队列线程中:
-	      +-> iopf_handle_group
-	        +-> iopf_handle_single
-		  +-> handle_mm_fault
-	              这里会最终申请内存并建立页表
+              在工作队列线程中:
+              +-> iopf_handle_group
+                +-> iopf_handle_single
+                  +-> handle_mm_fault
+                      这里会最终申请内存并建立页表
 
-	+-> arm_smmu_page_response
-	    软件执行完缺页流程后，软件控制SMMU向设备回响应。
-
+        +-> arm_smmu_page_response
+            软件执行完缺页流程后，软件控制SMMU向设备回响应。
+```
   - Invalid流程
 
     当软件释放申请的内存时，因为这些内存、SMMU中va到pa的映射以及SMMU和设备ATC里
     的缓存都要Invalid。
 
-	(to do: ...)
+        (to do: ...)
 
 4. 性能分析
 -----------
 
-	(to do: ...)
+        (to do: ...)
 
 
 5. 虚拟化
 ---------
 
-	(to do: ...)
+        (to do: ...)

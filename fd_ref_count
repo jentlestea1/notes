@@ -23,15 +23,15 @@ filp_open
 ```
 ```
 kernel/fs/ioctl.c
-ksys_ioctl
+ksys_ioctl系统调用
   +-> fdget
     +-> __fdget
+      在rcu锁里得到file结构的指针
       +-> __fget_light
         +-> __fget
 	  +-> get_file_rcu_many (atomic_long_add_unless(&(x)->f_count, xx, 0))
           这里只有在f_count非0的时候才会把引用计数加1。如果是0，表明已经file
 	  的引用计数已经是0。__fget会去files里查fd对应的file。
-	  (fix me: file何时释放)
   +-> fdput
     +-> fput
       +-> fput_many
@@ -40,12 +40,16 @@ ksys_ioctl
 	  +-> delayed_fput_work
 	    +-> delayed_fput
 	      +-> __fput
+	        +-> file_free(file)
 ```
 ```
 kernel/fs/open.c
-filp_close
-  +-> file_count
-  如果f_count是0，直接返回
-  +-> fput
-  如上
+close系统调用
+  +-> __close_fd
+    +-> spin_lock(&files->file_lock)
+    在锁里拿到fd对应的file结构的指针
+      +-> filp_close
+        +-> fput     
+        如上
+    +-> spin_unlock(&files->file_lock)
 ```

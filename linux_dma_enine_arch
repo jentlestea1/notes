@@ -9,8 +9,42 @@ Linux内核DMA子系统分析
 1. DMA engine使用
 -----------------
 
+ DMA子系统下有一个帮助测试的测试驱动(drivers/dma/dmatest.c), 从这个测试驱动入手
+ 我们了解到内核里的其他部分怎么使用DMA engine。配置内核，选则CONFIG_DMATEST可以
+ 把这个模块选中，编译会生成dmatest.ko。可以参考这个文档来快速了解怎么使用dmatest.ko:
+ https://www.kernel.org/doc/html/v4.15/driver-api/dmaengine/dmatest.html.
+
+ 具体上来讲，内核的其他模块使用dma engine的步骤是:
+
+  - 使用dma_request_channel先申请一个dma channel，之后的dma请求都基于这个申请
+    的dma channel。
+
+  - 调用dma_dev->device_prep_dma_memcpy(chan, dst, src, len, flag)把dma操作的参
+    数传给dma子系统。同时返回一个从chan申请的异步传输描述符: struct dma_async_tx_descriptor.
+
+    可以把用户的回调函数设置在上面的描述符里。通常这里的回调函数里是一个complete
+    函数，用来在传输完成后通知用户业务流程里的wait等待。
+
+  - tx->tx_submit(tx)把请求提交。
+
+    /* fix me: ? */
+  - dma_submit_error
+
+  - dma_async_issue_pending触发请求真正执行。
+
+    如上，在发送请求之后，一般可以在这里wait等待，通过上面注册的回调函数在dma
+    执行完成后通知这里的wait。
+
+    /* fix me: ? */
+  - dma_async_is_tx_complete
+
+  - 做完dma操作之后使用dma_release_channel释放申请的dma channel。
+
 2. DMA子系统分析
 ----------------
+
+ 分析一个现有的dmaengine驱动可以看到，dmaengine驱动需要使用dmaenginem_async_device_register
+ 向dma子系统注册驱动自己的struct dma_device结构
 
 3. DMA engine驱动分析
 ---------------------

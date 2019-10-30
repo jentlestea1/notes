@@ -54,3 +54,9 @@
 duration这一栏得到的是每个函数的执行时间。通过time一栏的时间戳，可以得到函数和
 函数之间的时延, 比如可以得到从发起一个dma传输task(hisi_dma_issue_pending)到
 中断函数执行(hisi_dma_irq)的大概时延是：9520.457583 -  9520.457571 = 12us。
+
+如果要跟踪一个函数的调用链，可以使用set_graph_function。具体的使用设置是:
+
+ - echo function_graph > current_tracer
+
+ - echo your_func > set_graph_function

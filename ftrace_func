@@ -18,9 +18,9 @@
 
  - echo function_graph > current_tracer //设置当前的跟踪器是function_graph
 
- - echo function-proc > trace_options
+ - echo funcgraph-proc > trace_options
 
- - echo function-abstime > trace_options //在输出结果里增加每个函数的时间戳
+ - echo funcgraph-abstime > trace_options //在输出结果里增加每个函数的时间戳
 
  - echo your_func > set_ftrace_filter //把你要跟踪的函数配置进ftrace
 

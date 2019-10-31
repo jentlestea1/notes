@@ -5,6 +5,7 @@ Linux SVA特性分析
 -v0.2 2019.9.18 Sherlock update数据结构和动态分析
 -v0.3 2019.10.13 Sherlock add性能分析
 -v0.4 2019.10.14 Sherlock add数据结构说明
+-v0.5 2019.10.31 Sherlock add iommu_sva_set_ops, iommu_sva_get_pasid
 
 简介: 最近Linux社区在上传SVA特性(share virtual memory), 简单讲这个特性可以达到
 这样的功能，就是可以是设备直接使用进程里的虚拟地址。如果把设备操作映射到用户态，
@@ -306,6 +307,35 @@ SMMU, VFIO, 虚拟化，DT, ACPI等方面的修改，所以补丁比较分散，
         +-> iommu_unbind_locked(to_iommu_bond(handle))
         这里的handle是一个struct iommu_sva
 ```
+    - iommu_sva_set_ops(iommu_sva, iommu_sva_ops)
+
+      这个接口把iommu_sva_ops传递给iommu_sva, iommu_sva_ops包含mm_exit回调。
+      在上面的iommu_sva_bind_generic里会调用mmu_notifier_register给当前的mm里
+      注册一个notifier，在mm发生改变的时候，mm子系统可以触发notifier里的回调
+      函数。当前的代码里，是在notifier的release回调里去调用iommu_sva里保存的
+      mm_exit回调函数。
+
+      SVA特性使得设备可以看到进程虚拟地址空间，这样在进程虚拟地址空间销毁的时候
+      应该调用设备驱动提供的函数停止设备继续访问进程虚拟地址空间。这里iommu_sva_set_ops
+      就是把设备驱动的回调函数注册给进程mm。
+
+      注意上面的mmu_notifier_register注册的iommu_mmu_notifier_ops回调里。release
+      只在进程异常时调用到，用户态进程正常退出时并不会调用。在进程正常退出时，
+      如何保证设备停止访问将要释放的进程地址空间，这里还有疑问。
+
+      进程退出的调用链是:
+      kernel/exit.c:
+      do_exit
+        +-> exit_mm
+	  +-> mmput
+	    +-> exit_mmap
+	      +-> mmu_notifier_release
+
+    - iommu_sva_get_pasid
+
+      这个接口返回返回smmu_sva对应的pasid数值，设备驱动需要把pasid配置给与这个
+      smmu_sva相关的硬件资源。
+
   需要使用SVA特性的社区驱动在调用上面的接口后，可以建立起静态的数据结构。
 
 ## 3. 动态分析

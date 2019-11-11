@@ -42,3 +42,7 @@ Again, make sure DMA activity has already finished.
 	it should _NOT_ be the 'count' value _returned_ from the
 	dma_map_sg call.
 ```
+dma_map_sg对一个sgl做map的时候，返回的map的sge的个数可能是小于输入sgl的sge的个数
+的，这是因为连续页做了合并操作，在有IOMMU的情况下，也可能是因为IOMMU的存在把一段
+连续的IOVA映射成了一些离散的物理地址块，而这些离散的物理地址块正是前面的sgl输入,
+这个连续的IOVA正式dma_map_sg的输出。

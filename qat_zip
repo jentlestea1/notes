@@ -48,4 +48,8 @@ Intel QAT ZIP初步分析
 
 3. 接口分析
 -----------
- (to do: ...)
+
+ 1. libqat有一个qat_service的服务，这个服务可能和/dev/qat_adf_ctl的这个字符设备
+    配合提供一些管理工作。
+
+ 2. qat卡可以load不同的固件，从而改变qat卡自身的功能。

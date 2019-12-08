@@ -51,6 +51,16 @@ Linux DMA buffer子系统
 ```
 	fastrpc_device_ioctl
 	  +-> fastrpc_dmabuf_alloc
+	    /*
+	     * dma_buf自己的一组回调含函数, 这些回调函数和进程之间share dma_buf
+	     * 有关，attach/detach用于第二个进程attach和detech dma_buf，map_dma_buf
+	     * unmap_dma_buf用于叫第二个设备获得dma_buf的dma地址，mmap是向用户态
+	     * map dma_buf的地址，map/vmap可以获得dma_buf的内核态虚拟地址。
+	     */
+	    +-> exp_info.ops = &fastrpc_dma_buf_ops;
+	    +-> dma_buf_export(&exp_info)
+	      /* 创建dma_buf对应的文件 */
+	      +-> dma_buf_getfile
 ```
 
 3. 实现分析

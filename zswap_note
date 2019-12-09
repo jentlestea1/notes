@@ -28,7 +28,15 @@ zswap是Linux内核里压缩swap内存的一个特性，他可以把需要swap�
 
    zswap的debug信息可以在/sys/kernel/debug/zswap/*里显示。
 
-5. 如果要看下zswap是否运行，需要构造系统内存被大量使用的场景。如果在服务器上，
+5. 如果系统没有swap分区，测试之前需要给系统加上swap分区，可以对一个空闲的磁盘分
+   区做：
+```
+   mkswap /dev/sda
+   swapon /dev/sda
+   用swapon -s可以查看系统中已经有的swap分区。
+```
+
+6. 如果要看下zswap是否运行，需要构造系统内存被大量使用的场景。如果在服务器上，
    这样的场景不好构造。可以使用cgroup构造。
 ```
    cgcreate -g memory:bob

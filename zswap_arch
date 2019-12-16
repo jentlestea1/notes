@@ -4,7 +4,9 @@ Linux zswap构架分析
 -v0.1 2019.12.16 Sherlock init
 
 简介：本文简单分析zswap的软件构架，为在zswap框架中添加crypto acomp的支持做准备。
-      关于zswap的基本介绍和使用可以参考: (to do: add link)
+      关于zswap的基本介绍和使用可以参考:
+      https://blog.csdn.net/scarecrow_byr/article/details/103463101.
+      本文的分析基于Linux主线5.5-rc1.
 
 
 1. 基本模型
@@ -20,7 +22,7 @@ Linux zswap构架分析
         zpool的时候需要给zpool注册一个evict的回调函数，这个函数用于在zpool的
 	后端内存分配器没有内存的时候, 把zpool里的压缩内存向swap设备写入。可以
 	看到现在的evict在向swap设备写数据的时候还要先把压缩的数据解压缩，如果写
-	入swap设备的数据将来被使用，重新加载会内存的代码路径是标准的缺页流程，
+	入swap设备的数据将来被使用，重新加载回内存的代码路径是标准的缺页流程，
 	和zswap没有关系。这个步骤整体上把创建出来的各种基础数据结构封装在一个
 	struct zswap_pool的结构中, 上面步骤里的per cpu压缩解压缩上下文也放在了
 	zswap_pool。
@@ -49,7 +51,7 @@ Linux zswap构架分析
       (默认是zbud); 压缩解压算法(默认是LZO)，测试硬件offload的时候，这里要选
       则相应的算法; zpool占内存的大小; 对相同页的优化处理。
 
-      在/sys/module/zswap/parameters/下也可以配置。
+      这些参数在/sys/module/zswap/parameters/下也可以配置。
 
    2. 在/sys/kernel/debug/zswap/下有zswap的相关统计项。
 
@@ -87,4 +89,4 @@ Linux zswap构架分析
     从上面store函数的分析中可以看到，因为整个设计都是基于per cpu的，所以做
     crypto_comp_compress的时候都是关闭抢占的(是否要关闭调度), 这和acomp的基本
     使用方式是不兼容的，在crypto testmgr.c里acomp的test case是wait等待任务完成
-    的。还有一点，压缩的数据需要copy到zpool的内存里。
+    的。还有一点，压缩完的数据需要copy到zpool的内存里。

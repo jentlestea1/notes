@@ -68,3 +68,8 @@ Ubuntu:/ # perf list | grep pmcg
 ```
   上面的0x75是设备对应的stream_id，PCIe设备的话，一般就是这个设备的BDF号。
   (fix me: device function number怎么表示?)
+
+  如果有smmu自定义的event实现，可以指定具体的event编号, 比如:
+```
+  perf stat -e smmuv3_pmcg_<phys_addr_page>/event=0x80/ <your_program>
+```

@@ -1,0 +1,104 @@
+fgets
+-----
+
+sscanf
+------
+
+fopen
+-----
+
+popen
+-----
+
+pclose
+------
+
+bzero
+-----
+
+gethostname
+-----------
+
+gethostbyname
+-------------
+
+bcopy
+-----
+
+socket
+------
+
+bind
+----
+
+listen
+------
+
+accept
+------
+
+connect
+-------
+
+fdopen
+------
+	       if( (sock_fpi = fdopen(sock_fd,"r")) == NULL )
+		       oops("fdopen reading");
+
+	       if ( fgets(dirname, BUFSIZ-5, sock_fpi) == NULL )
+		       oops("reading dirname");
+	       sanitize(dirname);
+
+	       /* open writing direction as buffered stream */
+	       if ( (sock_fpo = fdopen(sock_fd,"w")) == NULL )
+		       oops("fdopen writing");
+
+	多次对同一个fd调用fdopen, 需要多次调用fclose关闭打开的fd。
+
+stat
+----
+	#include <sys/stat.h>
+
+	man 2 stat
+
+strrchr
+-------
+	char * file_type(char *f)
+	/* returns 'extension' of file */
+	{
+	        char    *cp;
+	        if ( (cp = strrchr(f, '.' )) != NULL )
+	                return cp+1;
+	        return "";
+	}
+	
+	ends_in_cgi(char *f)
+	{
+	        return ( strcmp( file_type(f), "cgi" ) == 0 );
+	}
+
+strchr
+------
+
+recvfrom (socket)
+-----------------
+
+inet_ntoa
+---------
+
+ntohs
+-----
+
+sendto
+------
+
+getpid
+------
+
+strncmp
+-------
+
+isalnum
+-------
+	isxxx
+

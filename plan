@@ -3,7 +3,21 @@
 3. APUE789 11 12 13
 4. perf flame             xx
 4. work queue分析
-5. sva分析
-6. dma engine子系统分析
+5. sva分析                xx
+6. dma engine子系统分析   xx
 7. dma buf子系统分析 
 8. android ion分析
+
+9. smmu series
+   1. smmu spec导读
+   2. smmu linux软件构架分析
+   3. smmu 细节专题
+
+10. socket series(CH11-CH13)
+   1.读书笔记
+
+11. c库函数 series
+   1. string
+   2. file
+   3. net
+   ...

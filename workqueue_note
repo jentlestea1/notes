@@ -32,7 +32,7 @@ Linux workqueue 分析
  启动的时候就分配好的(to do: 需要分析)。unbound workqueue需要用户自己创建。
 
  如果用户使用per-cpu workqueue，只需要调用schedule_work(struct work_struct *work)
- 即可。这个API会把work放到当前cpu的normal kworker pool中的一个work上跑。
+ 即可。这个API会把work放到当前cpu的normal kworker pool中的一个worker上跑。
  (to do：怎么放到high prioiry kworker pool上跑？)
 
  如果用户使用unbound workqueue, 需要先使用
@@ -86,7 +86,7 @@ Linux workqueue 分析
 ----------------------
  
  如上，workqueue的work不会直接和worker绑定，而是在queue_work的时候选择一个
- kwoker pool。
+ kworker pool。
 
  对于unbound workqueue, alloc_workqueue中会判断系统里是否有相同的kworker pool,
  如果有，就用已有的kworker pool。判断相同的依据是nice，cpumask，no numa。对于
@@ -100,9 +100,9 @@ Linux workqueue 分析
  新起一个线程执行work。下面的测试中，我们给一个unbound wq里发work，每个work里
  sleep一段时间，可以看到，这个unbound wq是复用的系统已经有的kworker pool，在用完
  该kworker pool里本来已有的线程后，该worker pool会起新的线程执行work, 过一会
- 可以发现，该worker pool里的线程有一部分被回收。
+ 可以发现，该worker pool里的线程有一部分被回收。(case 3)
 
- 注意在申请workqueue的时候加上WQ_SYSFS参数，可以把该workqueue的信息通过sysfs
+ 注意, 在申请workqueue的时候加上WQ_SYSFS参数，可以把该workqueue的信息通过sysfs
  暴露到用户态：e.g. /sys/bus/workqueue/devices/writeback
 
 4. 测试
@@ -114,7 +114,8 @@ Linux workqueue 分析
 
  case 2显示schedule_work可以把work放到当前的cpu上。
 
- case 3显示当kwork pool里没有
+ case 3显示当kwork pool里的线程都处于block状态的时候，如果有work需要执行，对应
+       的pool就会新分配内核线程。
 
 附录
 ----

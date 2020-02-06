@@ -1,0 +1,121 @@
+Linux workqueue 分析
+====================
+
+-v0.1 2020.2.6 Sherlock init
+
+简介：本文介绍Linux内核里workqueue的使用方法，分析workqueue具体的代码实现。
+      并且基于qemu虚拟机做简单的测试。
+
+      本文的分析基于Linux主线代码v5.5, 分析参考了蜗窝科技的分析文章：
+      http://www.wowotech.net/irq_subsystem/workqueue.html
+      http://www.wowotech.net/irq_subsystem/cmwq-intro.html
+      http://www.wowotech.net/irq_subsystem/alloc_workqueue.html
+      http://www.wowotech.net/irq_subsystem/queue_and_handle_work.html
+
+1. workqueue基本使用方法
+------------------------
+
+ workqueue机制可以异步执行内核其他模块的任务。内核其他模块有任务需要异步执行的
+ 时候，可以调用workqueue提供的接口，把任务丢给一个对应的内核线程去执行。这里
+ 提到的任务定义是一个函数。
+
+ 这里我们提到的workqueue是内核最新的版本，它的正规名字叫做Concurrency Managed
+ Workqueue。代码路劲在：linux/kernel/workqueue.c, linux/include/linux/workqueue.h
+
+ workqueue相关的基本概念有: work, workqueue, pool workqueue, worker pool, worker,
+ per-cpu worker pool, unbound worker pool, per-cpu workqueue, unbound workqueue.
+
+ work, workqueue是workqueue对其他模块的接口。使用者要先创建需要执行的任务, 即work。
+ 然后调用workqueue API把这个任务放入相关的workqueue里执行。
+
+ 整个workqueue又分per-cpu workqueue和unbound workqueue。per-cpu workqueue是系统
+ 启动的时候就分配好的(to do: 需要分析)。unbound workqueue需要用户自己创建。
+
+ 如果用户使用per-cpu workqueue，只需要调用schedule_work(struct work_struct *work)
+ 即可。这个API会把work放到当前cpu的normal kworker pool中的一个work上跑。
+ (to do：怎么放到high prioiry kworker pool上跑？)
+
+ 如果用户使用unbound workqueue, 需要先使用
+ alloc_workqueue(const char *fmt, unsigned int flags, int max_active, ...)申请
+ workqueue, 其中flags中要使用WQ_UNBOUND。随后使用
+ queue_work(struct workqueue_struct *wq, struct work_strct *work)把work放到wq
+ 里执行，也可以用queue_work_on(int cpu, struct workqueue_struct *wq, struct work_strct *work)，
+ 但是，上面的这个函数执行的时候并不能精确的把work放在cpu上执行。这两个函数的
+ 效果都是，把work放到当前cpu对应的numa node上的一个cpu跑。
+
+ 注意上面只是分析了，work和对应执行work的cpu，至于什么时候会新增加kworker pool，
+ 什么时候会新增加pool里的worker(线程), 我们需要先大致了解当前workqueue的软件构架。
+
+ 现在workqueue的设计分了前端和后端, 前端是workqueue，后端是kworker pool，worker。
+ 中间靠一个pool workqueue的东西连接。这里kworker pool就是一个线程池，worker就是
+ 一个个线程，pool workqueue的pool是一个动作，这个动作把前端的workqueue和后端的
+ 一个线程池建立起联系。
+
+```
+     +----------+ 		      
+     |unbound wq+-+- kworker pool(node0)-+- worker0
+     +----------+ |       	         +- worker1
+                  |                      `- ...
+                  |
+          	  `- kworker pool(node1)-+- worker0
+                                         +- worker1
+                                         `- ...
+     +------------+
+     |numa node 0 |
+     |            |  .-- kworker pool    (<cpu num>:<worker num> ) -+- worker0
+     |   cpu 0 ---+--+-- kworker pool[H] (<cpu num>:<worker num>H ) +- worker1
+     |		  |  .-- kworker pool                               `- ...
+     |   cpu 1 ---+--+-- kworker pool[H] ---------------------------+- worker0
+     +------------+                                                 +- worker1
+                                                                    `- ...
+     +------------+
+     |numa node 1 |
+     |            |
+     |   cpu 2    |      ...
+     |            |
+     |   cpu 3    |
+     +------------+
+```
+
+2. workqueue代码的基本结构
+--------------------------
+
+ 详见简介中的连接, 这四篇文章已经讲的很好。
+
+3. workqeueu API再挖掘
+----------------------
+ 
+ 如上，workqueue的work不会直接和worker绑定，而是在queue_work的时候选择一个
+ kwoker pool。
+
+ 对于unbound workqueue, alloc_workqueue中会判断系统里是否有相同的kworker pool,
+ 如果有，就用已有的kworker pool。判断相同的依据是nice，cpumask，no numa。对于
+ per-cpu workqueue，直接选择当前cpu上的kworker pool。
+
+ 创建一个新的kworker pool肯定至少要创建一个内核线程。所以，如果alloc_workqueue
+ 复用旧的kworker pool可能会用之前kworker pool里的线程，如果alloc_workqueue里创建
+ 新的kworker pool，那么这个步骤就会新建一个内核线程。
+
+ kworker pool的worker是动态调整的，pool里的线程都处于阻塞状态的时候，pool就会
+ 新起一个线程执行work。下面的测试中，我们给一个unbound wq里发work，每个work里
+ sleep一段时间，可以看到，这个unbound wq是复用的系统已经有的kworker pool，在用完
+ 该kworker pool里本来已有的线程后，该worker pool会起新的线程执行work, 过一会
+ 可以发现，该worker pool里的线程有一部分被回收。
+
+ 注意在申请workqueue的时候加上WQ_SYSFS参数，可以把该workqueue的信息通过sysfs
+ 暴露到用户态：e.g. /sys/bus/workqueue/devices/writeback
+
+4. 测试
+-------
+
+ 如下附录中的测试代码。
+
+ case 1显示queue_work_on只能把work放在对应numa node上的cpu，无法具体到cpu。
+
+ case 2显示schedule_work可以把work放到当前的cpu上。
+
+ case 3显示当kwork pool里没有
+
+附录
+----
+ wq_test.c测试代码：https://github.com/wangzhou/tests/blob/master/kwq/wq_test.c

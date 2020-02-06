@@ -2,7 +2,7 @@
 2. 信号使用笔记 APUE10    xx
 3. APUE789 11 12 13
 4. perf flame             xx
-4. work queue分析
+4. work queue分析 	  xx
 5. sva分析                xx
 6. dma engine子系统分析   xx
 7. dma buf子系统分析 
@@ -21,3 +21,6 @@
    2. file
    3. net
    4. memory
+
+12. cache MESI协议
+13. ARM compile code

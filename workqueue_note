@@ -52,19 +52,19 @@ Linux workqueue 分析
  一个线程池建立起联系。
 
 ```
-     +----------+ 		      
+     +----------+
      |unbound wq+-+- kworker pool(node0)-+- worker0
-     +----------+ |       	         +- worker1
+     +----------+ |                      +- worker1
                   |                      `- ...
                   |
-          	  `- kworker pool(node1)-+- worker0
+                  `- kworker pool(node1)-+- worker0
                                          +- worker1
                                          `- ...
      +------------+
      |numa node 0 |
      |            |  .-- kworker pool    (<cpu num>:<worker num> ) -+- worker0
      |   cpu 0 ---+--+-- kworker pool[H] (<cpu num>:<worker num>H ) +- worker1
-     |		  |  .-- kworker pool                               `- ...
+     |            |  .-- kworker pool                               `- ...
      |   cpu 1 ---+--+-- kworker pool[H] ---------------------------+- worker0
      +------------+                                                 +- worker1
                                                                     `- ...

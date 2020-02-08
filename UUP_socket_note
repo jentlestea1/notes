@@ -13,6 +13,9 @@ https://github.com/yuzhidi/Understanding-UNIXLINUX-Programming.git 简单编译�
 本机间的进程间通信的方式有匿名管道，命名管道(mkfifo), Unix domain socket, 通过
 相同的文件通信，共享内存。不同物理机器之间的进程见通信一般用socket。
 
+匿名管道
+--------
+
 匿名管道的一般用法是，在父进程中创建管道，fork出子进程，这样子进程也继承了父进程
 中的管道的读文件描述符和写文件描述符，如果是父进程往子进程写数据，那么父进程需要
 需要关闭读读描述符，子进程需要关闭写描述符，反之亦然，通信的时候父进程向写文件
@@ -20,6 +23,9 @@ https://github.com/yuzhidi/Understanding-UNIXLINUX-Programming.git 简单编译�
 ```
 to do: example
 ```
+
+命名管道
+--------
 
 命名管道的方式，需要首先使用mkfifo创建管道文件，然后写进程向管道里写入数据，读
 进程从管道里读出数据。命名管道可以使用在独立的进程之间，而匿名管道必须在父子进程
@@ -29,20 +35,111 @@ to do: example
 ```
 (如何查看系统里的管道？)
 
+文件通信
+--------
+
 文件通信需要使用文件锁保证一致性
 
 共享内存
+--------
+
 (如何查看系统中的共享内存？)
+
+socket
+------
 
 关于socket通信，这几章介绍了基于TCP的socket，数据报socket(基于UDP), 和Unix domain
 socket。可以使用select和poll响应多个阻塞的文件。
 
-socket
+ 1. 流式socket:
 
-数据报socket
+    client端连接建立的流程：
+```
+	struct sockaddr_in  servadd;        /* the number to call */
+	struct hostent      *hp;            /* used to get number */
+	int    sock_id, sock_fd;            /* the socket and fd  */
 
-Unix domain socket
+	/*
+	 * AF_INET表示Internet域，SOCK_STREAM表示流式socket
+	 */
 
-select poll
+	sock_id = socket(AF_INET, SOCK_STREAM, 0);    /* get a line */
+	if (sock_id == -1) 
+		oops( "socket" );
 
+	/* servadd用来描述server的地址, 地址由IP和port组成 */
+	bzero(&servadd, sizeof(servadd));   /* zero the address */
 
+	/*
+	 * 这个函数返回host对应的IP地址，入参是host name或者域名。测试返现，
+	 * 如果是host name，得到的是/etc/hosts下对应的IP; 如果是域名，会得到对应
+	 × 的IP。
+	 */
+	hp = gethostbyname(av[1]);          /* lookup host's ip # */
+	if (hp == NULL) 
+		oops(av[1]);                /* or die */
+	bcopy(hp->h_addr, (struct sockaddr *)&servadd.sin_addr, hp->h_length);
+
+	servadd.sin_port = htons(atoi(av[2]));  /* fill in port number */
+
+	servadd.sin_family = AF_INET ;          /* fill in socket type */
+
+	/* now dial */
+	if (connect(sock_id,(struct sockaddr *)&servadd, sizeof(servadd)) != 0)
+	       oops( "connect" );
+```
+   server端(省略了一些错误处理)：
+```
+	struct  sockaddr_in   saddr;   /* build our address here */
+	struct	hostent		*hp;   /* this is part of our    */
+	char	hostname[HOSTLEN];     /* address 	         */
+	int	sock_id,sock_fd;       /* line id, file desc     */
+	FILE	*sock_fp;              /* use socket as stream   */
+
+	sock_id = socket(PF_INET, SOCK_STREAM, 0);    /* get a socket */
+	bzero((void *)&saddr, sizeof(saddr)); /* clear out struct     */
+
+	gethostname(hostname, HOSTLEN);         /* where am I ?         */
+	hp = gethostbyname( hostname );         /* get info about host  */
+	                                        /* fill in host part    */
+	bcopy((void *)hp->h_addr, (void *)&saddr.sin_addr, hp->h_length);
+	saddr.sin_port = htons(PORTNUM);        /* fill in socket port  */
+	saddr.sin_family = AF_INET ;            /* fill in addr family  */
+
+	if (bind(sock_id, (struct sockaddr *)&saddr, sizeof(saddr)) != 0)
+	       oops("bind");
+
+       /*
+        * Step 3: allow incoming calls with Qsize=1 on socket
+        */
+	if (listen(sock_id, 1) != 0) 
+		oops("listen");
+
+       /*
+        * main loop: accept(), write(), close()
+        */
+
+	while (1) {
+		sock_fd = accept(sock_id, NULL, NULL); /* wait for call */
+		printf("Wow! got a call!\n");
+	        if (sock_fd == -1)
+	                oops("accept");         /* error getting calls  */
+
+	        sock_fp = fdopen(sock_fd,"w");  /* we'll write to the   */
+	        if (sock_fp == NULL)            /* socket as a stream   */
+	                oops("fdopen");         /* unless we can't      */
+
+	        thetime = time(NULL);           /* get time             */
+						/* and convert to strng */
+	        fprintf(sock_fp, "The time here is ..");
+	        fprintf(sock_fp, "%s", ctime(&thetime)); 
+	        fclose(sock_fp);              /* release connection   */
+	}
+
+```
+
+ 2. 数据报socket:
+
+ 3. Unix domain socket:
+
+ 4. select poll:

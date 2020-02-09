@@ -20,20 +20,13 @@ https://github.com/yuzhidi/Understanding-UNIXLINUX-Programming.git 简单编译�
 中的管道的读文件描述符和写文件描述符，如果是父进程往子进程写数据，那么父进程需要
 需要关闭读读描述符，子进程需要关闭写描述符，反之亦然，通信的时候父进程向写文件
 描述符写入信息，子进程读读文件描述符读出信息。
-```
-to do: example
-```
 
 命名管道
 --------
 
 命名管道的方式，需要首先使用mkfifo创建管道文件，然后写进程向管道里写入数据，读
 进程从管道里读出数据。命名管道可以使用在独立的进程之间，而匿名管道必须在父子进程
-之间使用。
-```
-to do: example
-```
-(如何查看系统里的管道？)
+之间使用。(如何查看系统里的管道?)
 
 文件通信
 --------
@@ -43,7 +36,35 @@ to do: example
 共享内存
 --------
 
-(如何查看系统中的共享内存？)
+使用ipcs -m可以查看系统里现在的共享内存，共享内存是用户态的一块内存，两个进程可以
+通过一块共享内存交换信息。使用共享内存会有同步问题，需要对共享内存加锁，做到各个
+进程对共享内存访问的互斥，这个可以用信号量机制，信号量是一个系统机制。
+
+  产生数据的进程：
+```
+	seg_id = shmget(TIME_MEM_KEY, SEG_SIZE, IPC_CREAT | 0777);
+
+	mem_ptr = shmat(seg_id, NULL, 0);
+
+	for (n = 0; n < 60; n++) {
+		time(&now);			/* get the time	*/
+		strcpy(mem_ptr, ctime(&now));	/* write to mem */
+		sleep(1);			/* wait a sec   */
+	}
+		
+	/* now remove it */
+	shmctl(seg_id, IPC_RMID, NULL);
+```
+  消耗数据的进程：
+```
+	seg_id = shmget(TIME_MEM_KEY, SEG_SIZE, 0777);
+
+	mem_ptr = shmat(seg_id, NULL, 0);
+
+	printf("The time, direct from memory: ..%s", mem_ptr);
+
+	shmdt( mem_ptr );
+```
 
 socket
 ------

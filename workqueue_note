@@ -1,7 +1,8 @@
 Linux workqueue 分析
 ====================
 
--v0.1 2020.2.6 Sherlock init
+-v0.1 2020.2.6  Sherlock init
+-v0.2 2020.2.12 Sherlock add more test cases
 
 简介：本文介绍Linux内核里workqueue的使用方法，分析workqueue具体的代码实现。
       并且基于qemu虚拟机做简单的测试。
@@ -33,7 +34,9 @@ Linux workqueue 分析
 
  如果用户使用per-cpu workqueue，只需要调用schedule_work(struct work_struct *work)
  即可。这个API会把work放到当前cpu的normal kworker pool中的一个worker上跑。
- (to do：怎么放到high prioiry kworker pool上跑？)
+ 使用queue_work_on(cpu, system_highpri_wq, work)可以把一个work放到指定cpu 高优先
+ 级pool上跑，使用queue_work_on(cpu, system_wq, work)可以把work放到指定cpu normal
+ kworker pool上跑。
 
  如果用户使用unbound workqueue, 需要先使用
  alloc_workqueue(const char *fmt, unsigned int flags, int max_active, ...)申请
@@ -108,14 +111,25 @@ Linux workqueue 分析
 4. 测试
 -------
 
- 如下附录中的测试代码。
+ 如下附录中的测试代码, 以下是测试得到的结论:
 
- case 1显示queue_work_on只能把work放在对应numa node上的cpu，无法具体到cpu。
+ case 1: queue_work_on只能把work放在对应numa node上的cpu，无法具体到cpu。
 
- case 2显示schedule_work可以把work放到当前的cpu上。
+ case 2: schedule_work可以把work放到当前的cpu上。
 
- case 3显示当kwork pool里的线程都处于block状态的时候，如果有work需要执行，对应
-       的pool就会新分配内核线程。
+ case 3: 当kwork pool里的线程都处于block状态的时候，如果有work需要执行，对应
+         的pool就会新分配内核线程。
+
+ case 4: schedule_work会把work放到当前cpu上跑，block的时候，pool会新分配线程。
+
+ case 5: schedule_work_on会只把work放到指定cpu上，block的时候，pool会新分配线程。
+
+ case 6: 使用unboud pool, 频繁queue_work_on, 即使没有block，pool里也会创建新
+         线程。
+
+ case 7: 使用queue_work_on(cpu, system_highpri_wq, work)可以把一个work放到指定
+         cpu上的高优先级pool上跑。如果有block, pool里会分配新线程，如果没有block，
+	 即使频繁调用queue_work_on pool也不会创建新线程。
 
 附录
 ----

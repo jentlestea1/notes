@@ -46,17 +46,45 @@ Linux workqueue 分析
  但是，上面的这个函数执行的时候并不能精确的把work放在cpu上执行。这两个函数的
  效果都是，把work放到当前cpu对应的numa node上的一个cpu跑。
 
- 注意上面只是分析了，work和对应执行work的cpu，至于什么时候会新增加kworker pool，
- 什么时候会新增加pool里的worker(线程), 我们需要先大致了解当前workqueue的软件构架。
+ 可以看到，虽然workqueue的用户接口是work定义和work queue，但是最新workqueue的设计
+ 把前端的用户接口和后端的执行线程解耦开来，而且进一步加入了work pool即线程池的
+ 概念，把具体的执行线程即worker的创建和销毁变成了一个动态的过程。所以，我们的讨论
+ 要先基于线程池来。对于per-cpu workqueue, 在workqueue初始化的过程中，为每一个cpu
+ 都创建一个normal work pool和高优先级的work pool。对于unbound workqueue使用的
+ unbound work pool，系统建立一个全局的hash表保存所有不同种类的unbound work pool,
+ 所谓的种类由nice、cpumask、no numa三个参数决定，如果发现需要的unbound work pool
+ 在系统里已经有了，那么直接使用已有的unbound work pool, 一个work可以显示的放在
+ 一个unbound workqueue上跑，但是真正调度到哪个unbound work pool、还是新建立一个
+ unbound work pool, 这个需要运行时才能决定。
 
- 现在workqueue的设计分了前端和后端, 前端是workqueue，后端是kworker pool，worker。
- 中间靠一个pool workqueue的东西连接。这里kworker pool就是一个线程池，worker就是
- 一个个线程，pool workqueue的pool是一个动作，这个动作把前端的workqueue和后端的
- 一个线程池建立起联系。
+ 如上，现在workqueue的设计分了前端和后端, 前端是workqueue，后端是kworker pool，
+ worker。中间靠一个pool workqueue的东西连接。这里kworker pool就是一个线程池，
+ worker就是一个个线程，pool workqueue的pool是一个动作，这个动作把前端的workqueue
+ 和后端的一个线程池建立起联系。
 
+ 至此，我们还需要知道线程池里线程创建和销毁的机制。首先创建线程池的时候会默认
+ 创建一个线程，注意，这里不是在创建队列的时候。也就是说，对于一个unbound work
+ queue, 在复用系统已经的unbound线程池的时候(绝大多数是复用已有的, 从调试结果看,
+ 系统一开始就会给每个numa node上创建一个normal unbound work pool和一个高优先级
+ unbound work pool), 是完全可能不新建线程的。当线程池里的线程没有被使用的时候，
+ 会自动进入idle状态，idle装态的线程在一定时间后会被销毁。线程池里至少要保持有一个
+ idle线程在，即使超时也不会被销毁。所以，当一个线程池里只有一个idle线程，这时我们
+ 又queue work到这个线程池时，workqueue的代码会首先wake up这个idle线程，这个idle
+ 线程起来后首先要做的就是看看有没有idle线程，如果没有，就要创建一个线程出来，可以
+ 看到idle线程被wake up后，这个线程池里已经没有idle线程，所以这里就会在线程池里
+ 创建新线程。当线程池里的线程被阻塞，这时又有新的work被调度的到这个线程池里时，
+ 也会创建新的线程(to do: 分析code)。处于运行状态的线程会把work queue里缓存的任务
+ 都执行一遍。当一个任务需要执行的时候，如果work pool里有运行状态的线程时，workqueue
+ 代码不会wake up idle线程。
+
+ 当频繁把work放到一个unbound work pool上时，会有新worker创建被创建出来。但是
+ 当频繁的把work放到per-cpu work pool上的时候，任务只会在一个相同的worker上执行。
+ (to do: 分析code)
+
+ 以上的数据结构大致是这样的:
 ```
      +----------+
-     |unbound wq+-+- kworker pool(node0)-+- worker0
+     |unbound wq+-+- kworker pool(node0)-+- worker0 (u<work pool id>:<worker num>)
      +----------+ |                      +- worker1
                   |                      `- ...
                   |
@@ -65,12 +93,12 @@ Linux workqueue 分析
                                          `- ...
      +------------+
      |numa node 0 |
-     |            |  .-- kworker pool    (<cpu num>:<worker num> ) -+- worker0
-     |   cpu 0 ---+--+-- kworker pool[H] (<cpu num>:<worker num>H ) +- worker1
-     |            |  .-- kworker pool                               `- ...
-     |   cpu 1 ---+--+-- kworker pool[H] ---------------------------+- worker0
-     +------------+                                                 +- worker1
-                                                                    `- ...
+     |            |  .-- kworker pool    -+- worker0 (<cpu num>:<worker num>)
+     |   cpu 0 ---+--+-- kworker pool[H]  +- worker1 
+     |            |  .-- kworker pool     `- ...
+     |   cpu 1 ---+--+-- kworker pool[H] -+- worker0 (<cpu num>:<worker num>H)
+     +------------+                       +- worker1
+                                          `- ...
      +------------+
      |numa node 1 |
      |            |
@@ -113,12 +141,13 @@ Linux workqueue 分析
 
  如下附录中的测试代码, 以下是测试得到的结论:
 
- case 1: queue_work_on只能把work放在对应numa node上的cpu，无法具体到cpu。
+ case 1: queue_work_on, 对unbound work queue操作时只能把work放在对应numa node上
+         的cpu，无法具体到cpu。
 
  case 2: schedule_work可以把work放到当前的cpu上。
 
  case 3: 当kwork pool里的线程都处于block状态的时候，如果有work需要执行，对应
-         的pool就会新分配内核线程。
+         的pool就会新分配内核线程。(这个对于per-cpu和unbound work queue都是一样的)
 
  case 4: schedule_work会把work放到当前cpu上跑，block的时候，pool会新分配线程。
 

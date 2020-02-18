@@ -13,7 +13,7 @@
    2. smmu linux软件构架分析
    3. smmu 细节专题
 
-10. socket series(CH11-CH13)
+10. socket series(CH11-CH13)  xx
    1.读书笔记
 
 11. c库函数 series
@@ -27,3 +27,5 @@
 14. perf uncore event    xx
 15. binding cpu related: numactl --cpubind=0 --membind=0 
     taskset -c cpu, irq binding: irq_set_affinity_hint, pci_alloc_irq_vectors_affinity?
+16. spinlock实现分析
+

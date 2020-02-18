@@ -24,4 +24,6 @@
 
 12. cache MESI协议
 13. ARM compile code
-14  perf uncore event
+14. perf uncore event    xx
+15. binding cpu related: numactl --cpubind=0 --membind=0 
+    taskset -c cpu, irq binding: irq_set_affinity_hint, pci_alloc_irq_vectors_affinity?

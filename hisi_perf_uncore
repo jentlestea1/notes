@@ -146,5 +146,5 @@ node   0   1   2   3
   hisi_sccl1_l3c10/wr_hit_spipe/                     [Kernel PMU event]
   hisi_sccl1_l3c10/wr_spipe/                         [Kernel PMU event]
 ```
-  rd_cpipe, rd_spipe可以表示CPU发出的所有请求数(to do: check again)。
+  rd_cpipe, rd_spipe可以表示CPU发出的所有请求数。
   rd_hit_cpipe, rd_hit_spipe可以表示CPU发出的请求hit该L3 partition的数目。

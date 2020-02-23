@@ -2,6 +2,8 @@ ARM64汇编学习-以qm.c反汇编为分析材料
 
 -v0.1 2020.2.20 Sherlock init
 
+note: 基于commit：b3a60822233中的qm.c
+
 简介：本文是linux/drivers/crypto/hisilicon/qm.c的反汇编，我们分析反汇编的逐条
       指令，借此学习ARM64汇编指令。
 
@@ -15,7 +17,6 @@ __raw_readl的入参放在x0，这个入参是一个指针，所以这里load对
 
 0000000000000008 <qm_db_v1>:
        8:	12003c21 	and	w1, w1, #0xffff
-       c:	12001c42 	and	w2, w2, #0xff
       10:	12003c63 	and	w3, w3, #0xffff
       14:	12001c84 	and	w4, w4, #0xff
 
@@ -243,26 +244,38 @@ csinv也是一个条件指令, wzr不知道是什么?
      13c:	aa0003f3 	mov	x19, x0
      140:	90000000 	adrp	x0, 0 <__raw_readl>
 
-adrp?
+adrp是取出__raw_readl所在一个4K页的基地址，可以看到编译器会把“qm”这个字符串放到
+这个页的最开始处。
 
      144:	91000000 	add	x0, x0, #0x0
      148:	90000014 	adrp	x20, 0 <__raw_readl>
-
-adrp?
-
      14c:	f9407a61 	ldr	x1, [x19, #240]
      150:	94000000 	bl	0 <debugfs_create_dir>
      154:	aa0003e2 	mov	x2, x0
+
+x0里有debugfs_create_dir的返回值。
+
      158:	b9400660 	ldr	w0, [x19, #4]
      15c:	f9007e62 	str	x2, [x19, #248]
+
+怎么看一个结构里对应域段的偏移位置？
+
      160:	35000560 	cbnz	w0, 20c <hisi_qm_debug_init+0xdc>
 
-cbnz
+cbnz是一个比较跳转指令，compare branch non zero, 如果w0非0，那么跳转到
+hisi_qm_debug_init+0xdc的地址执行。这里的20c就是hisi_qm_debug_init+0xdc的地址。
+这里是if语句没有进去，直接跳到了后面的debugfs_create_file去了。
 
      164:	a9025bb5 	stp	x21, x22, [x29, #32]
      168:	90000014 	adrp	x20, 0 <__raw_readl>
      16c:	f90023b9 	str	x25, [x29, #64]
+
+x21, x22，x25入栈。
+
      170:	91040275 	add	x21, x19, #0x100
+
+qm找到qm_d的地址? 注意这个对应的c代码已经在qm_create_debugfs_file里了。
+
      174:	91000299 	add	x25, x20, #0x0
      178:	aa1503e3 	mov	x3, x21
      17c:	aa1903e4 	mov	x4, x25
@@ -271,7 +284,13 @@ cbnz
      188:	90000000 	adrp	x0, 0 <__raw_readl>
      18c:	91000000 	add	x0, x0, #0x0
      190:	94000000 	bl	0 <debugfs_create_file>
+
+注意这里没有了qm_create_debugfs_file, 估计是把这个函数里的内容直接展开了。
+
      194:	b901027f 	str	wzr, [x19, #256]
+
+str wzr, <addr>?
+
      198:	90000018 	adrp	x24, 0 <__raw_readl>
      19c:	90000017 	adrp	x23, 0 <__raw_readl>
      1a0:	91000318 	add	x24, x24, #0x0
@@ -290,6 +309,9 @@ cbnz
      1d4:	90000000 	adrp	x0, 0 <__raw_readl>
      1d8:	91000000 	add	x0, x0, #0x0
      1dc:	94000000 	bl	0 <debugfs_create_file>
+
+return 0上面的debugfs_create_file
+
      1e0:	52800020 	mov	w0, #0x1                   	// #1
      1e4:	b9013260 	str	w0, [x19, #304]
      1e8:	aa1803e2 	mov	x2, x24
@@ -307,7 +329,11 @@ cbnz
      218:	52802481 	mov	w1, #0x124                 	// #292
      21c:	90000000 	adrp	x0, 0 <__raw_readl>
      220:	91000000 	add	x0, x0, #0x0
+
+20c~220是为下面debugfs_create_file准备入参：
+
      224:	94000000 	bl	0 <debugfs_create_file>
+
      228:	52800000 	mov	w0, #0x0                   	// #0
      22c:	a94153f3 	ldp	x19, x20, [sp, #16]
      230:	a8c57bfd 	ldp	x29, x30, [sp], #80

@@ -42,7 +42,7 @@ lsl逻辑左移指令: x4内容左移48bit, 这里和(u64)priority << QM_DB_PRIO
       28:	d3701c42 	ubfiz	x2, x2, #16, #8
 
 unsigned bit field insert zero, bit运算的指令, 貌似是把最低8bit的搬到16bit起始的
-偏移处？
+偏移处
 
       2c:	aa038083 	orr	x3, x4, x3, lsl #32
 
@@ -75,13 +75,19 @@ io_base + dbase的到要写的地址，先保存在x0里。注意x0之前是第�
       4c:	d2840006 	mov	x6, #0x2000                	// #8192
       50:	7100085f 	cmp	w2, #0x2
 
-cmp是比较指令
+cmp是比较指令, 实际相当于有符号减法，然后设置条件标记(condition flags)。
 
       54:	d2820005 	mov	x5, #0x1000                	// #4096
+
+这里的mov和上面的mov以及cmp完成一个if-else的操作给dbase赋值。
+
       58:	12003c21 	and	w1, w1, #0xffff
       5c:	12003c63 	and	w3, w3, #0xffff
       60:	12001c84 	and	w4, w4, #0xff
       64:	9a8630a5 	csel	x5, x5, x6, cc  // cc = lo, ul, last
+
+csel是一个条件指令，根据最后位置处的flag, 决定是否x5 = x6。(to do: ...)
+
       68:	d50332bf 	dmb	oshst
       6c:	d3741c42 	ubfiz	x2, x2, #12, #8
       70:	92403c21 	and	x1, x1, #0xffff
@@ -91,11 +97,16 @@ cmp是比较指令
       80:	aa030083 	orr	x3, x4, x3
       84:	8b050000 	add	x0, x0, x5
       88:	f9000003 	str	x3, [x0]
+
+这一段同qm_db_v1中的分析。
+
       8c:	d65f03c0 	ret
 
 0000000000000090 <qm_get_irq_num_v1>:
       90:	52800020 	mov	w0, #0x1                   	// #1
       94:	d65f03c0 	ret
+
+像这种简单函数，一个mov就ok了。
 
 0000000000000098 <qm_get_irq_num_v2>:
       98:	b9400402 	ldr	w2, [x0, #4]
@@ -103,14 +114,26 @@ cmp是比较指令
       a0:	52800040 	mov	w0, #0x2                   	// #2
       a4:	7100005f 	cmp	w2, #0x0
       a8:	1a800020 	csel	w0, w1, w0, eq  // eq = none
+
+和上面一样，用mov + cmp + csel来实现if-else。cmp, w2如果等于0，Z = 1，csel中
+如果 Z = 1，w0 = w1。
+
       ac:	d65f03c0 	ret
 
 00000000000000b0 <qm_hw_error_init_v1>:
       b0:	d50332bf 	dmb	oshst
+
+为啥要有一个barrier?
+
       b4:	f9400c00 	ldr	x0, [x0, #24]
       b8:	5283ffe1 	mov	w1, #0x1fff                	// #8191
       bc:	91440000 	add	x0, x0, #0x100, lsl #12
       c0:	91001000 	add	x0, x0, #0x4
+
+这两条add指令完成 io_base + QM_ABNORMAL_INT_MASK (MASK值是0x100004)。第一条add
+是add和lsl的结合，lsl是logic shift left，整体效果是：x0 = x0 + 0x100 << 12。
+注意，这里把0x100004放在两条指令里拼在一起。
+
       c4:	b9000001 	str	w1, [x0]
       c8:	d65f03c0 	ret
       cc:	d503201f 	nop
@@ -118,25 +141,92 @@ cmp是比较指令
 00000000000000d0 <hisi_qm_get_free_qp_num>:
       d0:	a9bd7bfd 	stp	x29, x30, [sp, #-48]!
       d4:	910003fd 	mov	x29, sp
+
+注意出现了之前没有的堆栈相关的操作, 是因为这个函数里有子函数调用。
+stp指令store两个寄存器到连续的地址，注意这里地址计算的方式sp = sp - 48，先更新
+sp, 然后再取sp地址的内存，把x29，x30写入sp和sp + 8的地址。x29是FP，也就会栈帧寄存器，
+x30是LR，就是函数返回地址，其他函数在调用hisi_qm_get_free_qp_num的时候把下一条
+指令的地址存在LR里。ARM64上bl会把下一条指令的地址存在LR。
+
+这里的两条指令和函数结尾的ldp x29, x30, [sp], #48 是函数调用的时候保存x29，x30的
+常用方式。要立即这里的逻辑，需要理解ARM64的函数调用的约定，这个是ARM64 ABI的一
+部分，ARM有专门的文档描述。
+
+简单的讲，这里的逻辑是:
+```
+                   |         |
+	sp, x29 -> |         |   高地址
+                   |         |
+                   |         |
+                   | x30 LR  |
+        sp, x29 -> | x29 FR  |
+	           +---------+   低地址
+```
+在进入这个函数的时候, sp和x29都指向调用这个函数的函数的栈定，栈向下生长，所以当
+前的函数一进来首先把sp向下移动48，然后保存x29，x30到这个函数的栈里。注意这里有
+几点，因为这个函数里又要调用其他的函数，所以这里为这个函数建了栈，像上面的简单
+函数里，只要寄存器辅助就可以完成功能的就不需要使用栈；这里为什么要把FR和LR保存
+在栈里，因为FR和LR的值马上可能要被重写，而这这个函数退出是又必须使用FR，LR当前
+保存的信息, 一开始进入当前函数的时候，FR的值是高地址处x29的指向，LR保存的是
+hisi_qm_get_free_qp_num的返回地址，在hisi_qm_get_free_qp_num FR会新指向新的栈
+顶地址，就是mov x29, sp这条指令搞得, LR的值可能会在当前函数里有子函数调用的时候
+被改掉，所以函数一开始就要把栈向下生长，然后是x29, x30入栈。
+
       d8:	a90153f3 	stp	x19, x20, [sp, #16]
+
+下面要用x19，x20，所以先把他们入栈保存。
+
       dc:	aa0003f4 	mov	x20, x0
+
+x0的值转存到x20，因为等下调用_raw_read_lock的时候要用x0给被调用的函数传参数。
+read_lock是一个宏，所以这里看不到read_lock。
+
       e0:	f90013f5 	str	x21, [sp, #32]
       e4:	9102a015 	add	x21, x0, #0xa8
+
+x21存放的已经是qps_lock的地址了。
+
       e8:	aa1503e0 	mov	x0, x21
+
+利用x0传_raw_read_lock的参数。
+
       ec:	94000000 	bl	0 <_raw_read_lock>
       f0:	29450693 	ldp	w19, w1, [x20, #40]
+
+x20存的是qm指针，所以这里取出qp_num和qp_in_used。
+
       f4:	aa1503e0 	mov	x0, x21
+
+准备下次_raw_read_unlock的入参，这里应该不用在给x0赋值了？莫非_raw_read_lock
+可能会改变x0的值？
+
       f8:	4b010273 	sub	w19, w19, w1
       fc:	94000000 	bl	0 <_raw_read_unlock>
      100:	f94013f5 	ldr	x21, [sp, #32]
+
+把之前存在栈中的x21写回寄存器。
+
      104:	2a1303e0 	mov	w0, w19
+
+为整个函数准备返回值，写到x0中。
+
      108:	a94153f3 	ldp	x19, x20, [sp, #16]
+
+把之前存在栈中的x19, x20写回寄存器。
+
      10c:	a8c37bfd 	ldp	x29, x30, [sp], #48
+
+把x29, x30的值出栈, 注意这里是先会sp处的值出栈，然后sp = sp + 48销毁栈。这时，
+x29指向高地址的x29位置，x30已经是hisi_qm_get_free_qp_num的返回地址了。
+
      110:	d65f03c0 	ret
      114:	d503201f 	nop
 
 0000000000000118 <hisi_qm_get_hw_version>:
      118:	39412000 	ldrb	w0, [x0, #72]
+
+load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
+
      11c:	51008001 	sub	w1, w0, #0x20
      120:	7100083f 	cmp	w1, #0x2
      124:	5a9f3000 	csinv	w0, w0, wzr, cc  // cc = lo, ul, last

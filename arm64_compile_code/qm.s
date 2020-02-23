@@ -1,11 +1,11 @@
 ARM64汇编学习-以qm.c反汇编为分析材料
 
 -v0.1 2020.2.20 Sherlock init
+-v0.2 2020.2.23 Sherlock 分析到函数hisi_qm_debug_init
 
-note: 基于commit：b3a60822233中的qm.c
 
 简介：本文是linux/drivers/crypto/hisilicon/qm.c的反汇编，我们分析反汇编的逐条
-      指令，借此学习ARM64汇编指令。
+      指令，借此学习ARM64汇编指令。基于commit：b3a60822233中的qm.c
 
 0000000000000000 <__raw_readl>:
        0:	b9400000 	ldr	w0, [x0]
@@ -245,7 +245,7 @@ csinv也是一个条件指令, wzr不知道是什么?
      140:	90000000 	adrp	x0, 0 <__raw_readl>
 
 adrp是取出__raw_readl所在一个4K页的基地址，可以看到编译器会把“qm”这个字符串放到
-这个页的最开始处。
+这个页的最开始处。后面的adrp还是一样的使用规则，所以这里对adrp的理解还是有问题?
 
      144:	91000000 	add	x0, x0, #0x0
      148:	90000014 	adrp	x20, 0 <__raw_readl>
@@ -253,7 +253,7 @@ adrp是取出__raw_readl所在一个4K页的基地址，可以看到编译器会
      150:	94000000 	bl	0 <debugfs_create_dir>
      154:	aa0003e2 	mov	x2, x0
 
-x0里有debugfs_create_dir的返回值。
+x0里有debugfs_create_dir的返回值, 是qm_d的地址，赋值给x2。
 
      158:	b9400660 	ldr	w0, [x19, #4]
      15c:	f9007e62 	str	x2, [x19, #248]
@@ -278,7 +278,13 @@ qm找到qm_d的地址? 注意这个对应的c代码已经在qm_create_debugfs_fi
 
      174:	91000299 	add	x25, x20, #0x0
      178:	aa1503e3 	mov	x3, x21
+
+x3是file。
+
      17c:	aa1903e4 	mov	x4, x25
+
+x4是qm_debug_fops的指针。
+
      180:	a90363b7 	stp	x23, x24, [x29, #48]
      184:	52803001 	mov	w1, #0x180                 	// #384
      188:	90000000 	adrp	x0, 0 <__raw_readl>

@@ -225,11 +225,14 @@ x29指向高地址的x29位置，x30已经是hisi_qm_get_free_qp_num的返回地
 0000000000000118 <hisi_qm_get_hw_version>:
      118:	39412000 	ldrb	w0, [x0, #72]
 
-load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
+load系列的指令，load一个byte。还有ldrh, ldrsb, ldrsh等
 
      11c:	51008001 	sub	w1, w0, #0x20
      120:	7100083f 	cmp	w1, #0x2
      124:	5a9f3000 	csinv	w0, w0, wzr, cc  // cc = lo, ul, last
+
+csinv也是一个条件指令, wzr不知道是什么?
+
      128:	d65f03c0 	ret
      12c:	d503201f 	nop
 
@@ -239,14 +242,23 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      138:	a90153f3 	stp	x19, x20, [sp, #16]
      13c:	aa0003f3 	mov	x19, x0
      140:	90000000 	adrp	x0, 0 <__raw_readl>
+
+adrp?
+
      144:	91000000 	add	x0, x0, #0x0
      148:	90000014 	adrp	x20, 0 <__raw_readl>
+
+adrp?
+
      14c:	f9407a61 	ldr	x1, [x19, #240]
      150:	94000000 	bl	0 <debugfs_create_dir>
      154:	aa0003e2 	mov	x2, x0
      158:	b9400660 	ldr	w0, [x19, #4]
      15c:	f9007e62 	str	x2, [x19, #248]
      160:	35000560 	cbnz	w0, 20c <hisi_qm_debug_init+0xdc>
+
+cbnz
+
      164:	a9025bb5 	stp	x21, x22, [x29, #32]
      168:	90000014 	adrp	x20, 0 <__raw_readl>
      16c:	f90023b9 	str	x25, [x29, #64]
@@ -316,12 +328,21 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
 0000000000000260 <hisi_qm_get_vft>:
      260:	f100003f 	cmp	x1, #0x0
      264:	fa401844 	ccmp	x2, #0x0, #0x4, ne  // ne = any
+
+ccmp
+
      268:	54000120 	b.eq	28c <hisi_qm_get_vft+0x2c>  // b.none
+
+b.eq
+
      26c:	a9bf7bfd 	stp	x29, x30, [sp, #-16]!
      270:	910003fd 	mov	x29, sp
      274:	f9407004 	ldr	x4, [x0, #224]
      278:	f9400084 	ldr	x4, [x4]
      27c:	b40000c4 	cbz	x4, 294 <hisi_qm_get_vft+0x34>
+
+cbz
+
      280:	d63f0080 	blr	x4
      284:	a8c17bfd 	ldp	x29, x30, [sp], #16
      288:	d65f03c0 	ret
@@ -350,6 +371,8 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      2dc:	9102c000 	add	x0, x0, #0xb0
      2e0:	94000000 	bl	0 <_dev_err>
      2e4:	17fffff9 	b	2c8 <hisi_qm_hw_error_init+0x18>
+
+b和bl的区别
 
 00000000000002e8 <hisi_qm_hw_error_handle>:
      2e8:	a9bf7bfd 	stp	x29, x30, [sp, #-16]!
@@ -391,6 +414,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      370:	94000000 	bl	0 <pci_enable_device_mem>
      374:	2a0003f4 	mov	w20, w0
      378:	37f81500 	tbnz	w0, #31, 618 <hisi_qm_init+0x2f0>
+
+tbnz?
+
      37c:	f9400674 	ldr	x20, [x19, #8]
      380:	d2804001 	mov	x1, #0x200                 	// #512
      384:	aa1503e0 	mov	x0, x21
@@ -411,6 +437,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      3c0:	90000004 	adrp	x4, 0 <arm64_use_ng_mappings>
      3c4:	d280e0e3 	mov	x3, #0x707                 	// #1799
      3c8:	f2e00d03 	movk	x3, #0x68, lsl #48
+
+movk?
+
      3cc:	d281e0e2 	mov	x2, #0xf07                 	// #3847
      3d0:	39400084 	ldrb	w4, [x4]
      3d4:	f2e00d02 	movk	x2, #0x68, lsl #48
@@ -573,6 +602,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
 
 0000000000000648 <qm_qp_work_func>:
      648:	f85f8001 	ldur	x1, [x0, #-8]
+
+ldur?
+
      64c:	b40009c1 	cbz	x1, 784 <qm_qp_work_func+0x13c>
      650:	a9bc7bfd 	stp	x29, x30, [sp, #-64]!
      654:	910003fd 	mov	x29, sp
@@ -584,6 +616,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      66c:	91010275 	add	x21, x19, #0x40
      670:	52800037 	mov	w23, #0x1                   	// #1
      674:	785d6014 	ldurh	w20, [x0, #-42]
+
+ldurh?
+
      678:	f85b8000 	ldur	x0, [x0, #-72]
      67c:	f9404e78 	ldr	x24, [x19, #152]
      680:	8b141014 	add	x20, x0, x20, lsl #4
@@ -609,6 +644,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      6d0:	540004c0 	b.eq	768 <qm_qp_work_func+0x120>  // b.none
      6d4:	d37c3c60 	ubfiz	x0, x3, #4, #16
      6d8:	781d62c3 	sturh	w3, [x22, #-42]
+
+sturh
+
      6dc:	f9407305 	ldr	x5, [x24, #224]
      6e0:	52800004 	mov	w4, #0x0                   	// #0
      6e4:	79400261 	ldrh	w1, [x19]
@@ -624,6 +662,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      70c:	91010261 	add	x1, x19, #0x40
      710:	4b0003e0 	neg	w0, w0
      714:	b820003f 	stadd	w0, [x1]
+
+stadd
+
      718:	79401e81 	ldrh	w1, [x20, #14]
      71c:	39412260 	ldrb	w0, [x19, #72]
      720:	12000021 	and	w1, w1, #0x1
@@ -649,6 +690,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      770:	781d62df 	sturh	wzr, [x22, #-42]
      774:	52800003 	mov	w3, #0x0                   	// #0
      778:	52000021 	eor	w1, w1, #0x1
+
+eor
+
      77c:	381d82c1 	sturb	w1, [x22, #-40]
      780:	17ffffd7 	b	6dc <qm_qp_work_func+0x94>
      784:	d65f03c0 	ret
@@ -718,6 +762,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      874:	b94020a2 	ldr	w2, [x5, #32]
      878:	12000096 	and	w22, w4, #0x1
      87c:	1b027c63 	mul	w3, w3, w2
+
+mul?
+
      880:	8b030000 	add	x0, x0, x3
      884:	37000424 	tbnz	w4, #0, 908 <hisi_qp_send+0xd0>
      888:	b4000580 	cbz	x0, 938 <hisi_qp_send+0x100>
@@ -842,6 +889,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      a54:	14000008 	b	a74 <hisi_qm_stop_qp+0x94>
      a58:	d2800020 	mov	x0, #0x1                   	// #1
      a5c:	f820303f 	stset	x0, [x1]
+
+stset
+
      a60:	52800000 	mov	w0, #0x0                   	// #0
      a64:	f94013f5 	ldr	x21, [sp, #32]
      a68:	a94153f3 	ldp	x19, x20, [sp, #16]
@@ -940,6 +990,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      bcc:	14000703 	b	27d8 <hisi_qm_uninit+0x1c8>
      bd0:	f9405e81 	ldr	x1, [x20, #184]
      bd4:	93407efb 	sxtw	x27, w23
+
+sxtw
+
      bd8:	aa1903e0 	mov	x0, x25
      bdc:	9102c318 	add	x24, x24, #0xb0
      be0:	f83b7833 	str	x19, [x1, x27, lsl #3]
@@ -997,6 +1050,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      cb0:	14000012 	b	cf8 <hisi_qm_create_qp+0x1d0>
      cb4:	14000011 	b	cf8 <hisi_qm_create_qp+0x1d0>
      cb8:	f83512df 	stclr	x21, [x22]
+
+stclr
+
      cbc:	aa1903e0 	mov	x0, x25
      cc0:	94000000 	bl	0 <_raw_write_unlock>
      cc4:	a9425bb5 	ldp	x21, x22, [x29, #32]
@@ -1089,6 +1145,9 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      e18:	8b140000 	add	x0, x0, x20
      e1c:	b9400000 	ldr	w0, [x0]
      e20:	3607fee0 	tbz	w0, #0, dfc <hisi_qm_set_vft+0xb4>
+
+tbz
+
      e24:	d50332bf 	dmb	oshst
      e28:	f9400e60 	ldr	x0, [x19, #24]
      e2c:	8b1c0000 	add	x0, x0, x28
@@ -1186,6 +1245,8 @@ load系列的指令，load一个byte。还有，ldrw,ldrd (to do: check)
      f9c:	128002a0 	mov	w0, #0xffffffea            	// #-22
      fa0:	d65f03c0 	ret
      fa4:	d503201f 	nop
+
+----> ok this time we stop here.
 
 0000000000000fa8 <hisi_qm_stop>:
      fa8:	a9bd7bfd 	stp	x29, x30, [sp, #-48]!

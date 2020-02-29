@@ -75,7 +75,9 @@ vSVA逻辑分析
  上报给guest，因为要做vSVA，是要给虚拟机里的进程的页表加页表项。以上[1]中还没有
  引入相关的接口，在SMMUv3 Nested Stage Setup[2]这组补丁里，在vfio里加了一个
  event queue的队列，mmap到host用户态，用来传递这个信息。没有找到和[2]配套的qemu,
- 逻辑上看，qemu应该处理并上报这个缺页请求，qemu里的vSMMU驱动做缺页处理。
+ 逻辑上看，qemu应该处理并上报这个缺页请求，qemu里的vSMMU驱动做缺页处理。在qemu
+ 的vSMMU驱动做缺页处理的时候，来自dev的请求是stall在SMMU里的，所以，vSMMU缺页
+ 处理完毕后，应该有通知机制通知到host SMMU，使能stall的请求继续。
 
  注意，这里存在同步问题，因为guest里的进程的页表在guest里，而实际的SMMU S1在host。
  这里不清楚MMU的S1到底是怎么搞的，也可能只在host里就可以搞定guest里的进程的页表？

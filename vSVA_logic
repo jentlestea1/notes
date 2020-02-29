@@ -1,0 +1,94 @@
+vSVA逻辑分析
+------------
+
+-v0.1 2020.2.29 Sherlock init
+
+简介：本文分析Linux vSVA现在的构架逻辑，用于相关开发人员对齐认识。目前为止Linux
+      vSVA的代码还在构架讨论和代码review阶段。
+
+1. vSVA
+-------
+
+ vSVA的目标是在虚拟机里(qemu)，使的IO设备可以直接使用进程VA。所以，我们这里的
+ 假设是物理IO设备已经通过host上vfio驱动直通给虚拟机。
+
+ 要实现vSVA的目标，我们需要同时使能SMMU的S1,S2地址翻译，S1进行VA->IPA翻译，S2
+ 进行IPA->PA翻译，如果是host vfio使能，我们认为S2的翻译已经通过vfio配置在SMMU里。
+
+ 所以，vSVA的方案需要把虚拟机系统里的进程页表同步到host SMMU上。因为是vSVA，就
+ 有可能出现设备发起内存访问的时候，host SMMU上虚拟机里的进程页表项不存在的情况，
+ 所以，host上的SMMU要可以支持S1缺页。因为，S2用vfio支持，vfio采用pin内存的方式，
+ 暂时我们不需要S2的缺页。host SMMU的S1缺页要同步到虚拟机里，这样虚拟机CPU才能
+ 访问到对应的页（这里先这样假设，MMU虚拟化还不清楚）。注意，很明显这里有一个
+ 设备和vcpu页表的同步问题，在host SVA上这个问题不存在，因为host SVA上cpu和SMMU
+ 是物理上共用相同页表。因为，vSVA可能采用“影子页表”的设计，需要在vcpu无效化页表
+ 的时候，把信息同步到host的SMMU上，这个信息包括页表项和TLB。host SVA上也有这个
+ 问题，但是如果用SMMU stall mode, 可以配置DVM，把CPU侧TLB invalidate广播到SMMU，
+ 这样就不需要软件同步。
+
+2. 软件框架
+-----------
+```
+      +----------------------+
+      | guest           user |
+      |                      |
+      |                      |
+      |                      |
+      |----------------------|   --------------------    VA
+      |               kernel |                                 +------------+
+      |                      |                                 | page table |
+      |                      |                                 +------------+
+      |                      |                                         ^
+      +----------------------+                                         |
+      +----------------------+         --------------------  IPA       |
+      | host                 |                                         |
+      |                      |                                         |
+      |                      |             +---------+                 |
+      |                      |             | DDR     |        PA       |
+      |                      |             +---------+                 |
+      |                      |                                         |
+      |                      |                                         |
+      |                      |                                         |
+      |                      |                                         |
+      +----------------------+                                         |
+              |                                                        |
+              |                   +-----+                              |
+              |          +------> | S1  |  VA->IPA  <------------------+
+           +--+---+ -----+        +-----+                  
+	   | SMMU |
+           +------+ -----+        +-----+
+              ^          +------> | S2  |  IPA->PA
+              |                   +-----+
+           +-----+
+	   | dev |
+           +-----+
+```
+ 我们顺着具体的数据流看看需要的接口，在dev的控制寄存器被map到guest的用户态后，
+ 用户态可以直接给guest VA配置给dev，启动dev从VA处读写数据。dev发出的访问到达
+ SMMU后首先要进过S1的翻译，得到IPA，所以S1需要guest里的进程的页表。
+
+ 在vfio: expose virtual Shared Virtual Addressing to VMs[1]这组补丁里在，给vfio
+ 加了一个ioctl(VFIO_IOMMU_BIND_MASK), 用这个ioctl把虚拟机里的进程的页表基地址
+ 传给S1。对于预先在vcpu一侧有缺页的情况，这里S1可以查页表翻译。
+
+ 对于dev传给SMMU的VA没有页表的情况, S1要做缺页处理。这里的缺页处理在逻辑上应该
+ 上报给guest，因为要做vSVA，是要给虚拟机里的进程的页表加页表项。以上[1]中还没有
+ 引入相关的接口，在SMMUv3 Nested Stage Setup[2]这组补丁里，在vfio里加了一个
+ event queue的队列，mmap到host用户态，用来传递这个信息。没有找到和[2]配套的qemu,
+ 逻辑上看，qemu应该处理并上报这个缺页请求，qemu里的vSMMU驱动做缺页处理。
+
+ 注意，这里存在同步问题，因为guest里的进程的页表在guest里，而实际的SMMU S1在host。
+ 这里不清楚MMU的S1到底是怎么搞的，也可能只在host里就可以搞定guest里的进程的页表？
+
+ 当guest里的进程有退出或者内存有释放时，需要更新guest里进程的页表，vcpu tlb和
+ host SMMU上和vcpu上相关进程的tlb。[1]中在vfio里提供了ioctl(VFIO_IOMMU_CACHE_INVALIDATE)
+ 用来更新host SMMU上的相关tlb。这里不清楚vcpu是否可以做带VMID/ASID的DVM,直接
+ 无效化相关的tlb。
+ 
+3. virtio iommu
+---------------
+
+ 以上的分析都是基于nested IOMMU/SMMU的方案。目前Jean在做virtio iommu的方案。
+ 这个方案在qemu里实现一个virtio iommu的虚拟设备qemu/hw/virtio/virtio-iommu.c,
+ 虚拟机内核里的drivers/iommu/virtio-iommu.c驱动这个虚拟设备，现在看来这个是
+ 用纯软件实现VA->IPA的映射。

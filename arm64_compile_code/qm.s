@@ -244,8 +244,8 @@ csinv也是一个条件指令, wzr不知道是什么?
      13c:	aa0003f3 	mov	x19, x0
      140:	90000000 	adrp	x0, 0 <__raw_readl>
 
-adrp是取出__raw_readl所在一个4K页的基地址，可以看到编译器会把“qm”这个字符串放到
-这个页的最开始处。后面的adrp还是一样的使用规则，所以这里对adrp的理解还是有问题?
+adrp是取出当前pc + label << 12, 然后把低12bit清0，赋值给x0。这里是用x0几下了
+当前pc的值。
 
      144:	91000000 	add	x0, x0, #0x0
      148:	90000014 	adrp	x20, 0 <__raw_readl>
@@ -258,7 +258,23 @@ x0里有debugfs_create_dir的返回值, 是qm_d的地址，赋值给x2。
      158:	b9400660 	ldr	w0, [x19, #4]
      15c:	f9007e62 	str	x2, [x19, #248]
 
-怎么看一个结构里对应域段的偏移位置？
+可以使用objdump --debugging查看一个结构体里对应域段的偏移。可以看到qm的248偏移
+处是debug里的qm_d
+```
+27380  <2><d923>：缩写编号：1 (DW_TAG_member)
+27381     <d924>   DW_AT_name        : (indirect string, offset: 0x6ad0): debug
+27382     <d928>   DW_AT_decl_file   : 182
+27383     <d929>   DW_AT_decl_line   : 160
+27384     <d92a>   DW_AT_type        : <0xd71e>
+27385     <d92e>   DW_AT_data_member_location: 232
+
+27139  <2><d742>：缩写编号：1 (DW_TAG_member)
+27140     <d743>   DW_AT_name        : (indirect string, offset: 0x93a5): qm_d
+27141     <d747>   DW_AT_decl_file   : 182
+27142     <d748>   DW_AT_decl_line   : 110
+27143     <d749>   DW_AT_type        : <0x2999>
+27144     <d74d>   DW_AT_data_member_location: 16
+```
 
      160:	35000560 	cbnz	w0, 20c <hisi_qm_debug_init+0xdc>
 
@@ -274,7 +290,8 @@ x21, x22，x25入栈。
 
      170:	91040275 	add	x21, x19, #0x100
 
-qm找到qm_d的地址? 注意这个对应的c代码已经在qm_create_debugfs_file里了。
+qm(x19) 0x100偏移是，qm->debug->files。注意这个对应的c代码已经在
+qm_create_debugfs_file里了。
 
      174:	91000299 	add	x25, x20, #0x0
      178:	aa1503e3 	mov	x3, x21
@@ -283,11 +300,14 @@ x3是file。
 
      17c:	aa1903e4 	mov	x4, x25
 
-x4是qm_debug_fops的指针。
+x4是qm_debug_fops的指针。奇怪，为啥这里用adrp就可以取到qm_debug_fops的地址了？
 
      180:	a90363b7 	stp	x23, x24, [x29, #48]
      184:	52803001 	mov	w1, #0x180                 	// #384
      188:	90000000 	adrp	x0, 0 <__raw_readl>
+
+这里太神奇，adrp又计算出了qm_debug_file_name的基地址。
+
      18c:	91000000 	add	x0, x0, #0x0
      190:	94000000 	bl	0 <debugfs_create_file>
 
@@ -295,7 +315,7 @@ x4是qm_debug_fops的指针。
 
      194:	b901027f 	str	wzr, [x19, #256]
 
-str wzr, <addr>?
+xzr/wzr是0寄存器。这里是写一个0到对应的内存。
 
      198:	90000018 	adrp	x24, 0 <__raw_readl>
      19c:	90000017 	adrp	x23, 0 <__raw_readl>
@@ -339,11 +359,14 @@ return 0上面的debugfs_create_file
 20c~220是为下面debugfs_create_file准备入参：
 
      224:	94000000 	bl	0 <debugfs_create_file>
-
      228:	52800000 	mov	w0, #0x0                   	// #0
      22c:	a94153f3 	ldp	x19, x20, [sp, #16]
      230:	a8c57bfd 	ldp	x29, x30, [sp], #80
      234:	d65f03c0 	ret
+
+注意这里尽然没有failed_to_create段的debugfs_remove_recursive这个函数，这是因为
+这个函数里唯一跳到这个label的qm_create_debugfs_file是没有错误返回的，所以编译器
+就没有把错误分支编译到二进制里。
 
 0000000000000238 <qm_regs_open>:
      238:	a9bf7bfd 	stp	x29, x30, [sp, #-16]!

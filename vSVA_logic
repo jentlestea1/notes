@@ -94,3 +94,8 @@ vSVA逻辑分析
  这个方案在qemu里实现一个virtio iommu的虚拟设备qemu/hw/virtio/virtio-iommu.c,
  虚拟机内核里的drivers/iommu/virtio-iommu.c驱动这个虚拟设备，现在看来这个是
  用纯软件实现VA->IPA的映射。
+
+ 基于以上的分析，可以基于[1][2]中的vfio接口在virtio iommu里实现有物理SMMU支持
+ 的virtio-iommu。但是，这个需要virtio-iommu协议的支持。目前，Jean在搞virt-iommu
+ 的协议jpbrucker.net/virtio-iommu/spec[3], 目前看virtio iommu spec中PASID/fault
+ 的支持还不完善。

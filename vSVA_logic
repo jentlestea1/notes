@@ -99,3 +99,26 @@ vSVA逻辑分析
  的virtio-iommu。但是，这个需要virtio-iommu协议的支持。目前，Jean在搞virt-iommu
  的协议jpbrucker.net/virtio-iommu/spec[3], 目前看virtio iommu spec中PASID/fault
  的支持还不完善。
+
+Note:
+-----
+
+1. qemu IO流程
+
+ qemu的用户态代码跑在cpu EL0, qemu内核态代码跑在cpu EL1。
+
+ qemu创建虚拟机的时候ioctl(CREATE_VM，VCPU，MEMORY)会到cpu EL2创建VM的记录信息。
+ ioctl(VM_RUN)会把PC指向虚拟机起始地址，然后退出到EL1(?)。EL2只起到虚拟机管理
+ 的作用，虚拟机上的代码正常运行时，代码占据真实的CPU，并且如果是用户态代码，跑
+ 在物理CPU的EL0, 如果是内核态代码就直接跑到物理CPU的EL1。当CPU访问物理内存的时候，
+ VA->IPA的转换由MMU S1直接支持, 当IPA的地址落在之前ioctl注册的虚拟机地址空间时，
+ 硬件自动完成MMU S2的转换。可见，虚拟机里的进程页表是直接放到虚拟机内核地址空间的。
+
+ 注意，这里直接把虚拟机里进程的页表基地址配置给SMMU S1会不会有安全问题？既然
+ 虚拟机内核态运行在CPU EL2上，貌似这里应该没有问题。
+
+ 虚拟机里的代码运行在CPU EL0/EL1。当有IO访问的时候, 因为之前创建虚拟机的时候
+ 已经把IO地址空间配置给虚拟机，这里有IO访问的时候会触发CPU异常，虚拟机退出，CPU
+ 进入EL2, CPU在EL2处理后退出到虚拟机qemu里，qemu可以具体去处理这个IO，比如是一个
+ 网络IO，那qemu可以直接起socket，把报文发出去。注意，这里的虚拟机退出是指CPU不再
+ 运行虚拟机里执行的代码，因为CPU并不知道如果控制IO。

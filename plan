@@ -27,6 +27,7 @@
 15. binding cpu related: numactl --cpubind=0 --membind=0 
     taskset -c cpu, irq binding: irq_set_affinity_hint, pci_alloc_irq_vectors_affinity?
 16. spinlock实现分析
+17. autotools
 
 1. perf
 2. memory

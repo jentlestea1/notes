@@ -1,0 +1,43 @@
+SMMU translation terminate with ACC RAS
+---------------------------------------
+
+-v0.1 2020.4.10 Sherlock init
+
+This doc shares the logic of SMMU translation terminate with ACC RAS. We will
+talk hardware operations and software code. This doc is based on code:
+https://github.com/Linaro/linux-kernel-warpdrive branch: zip-devel
+
+Currently when process dies, there is no way(software callback function) to
+control device DMA stop. The software flow is as below:
+
+iommu-sva.c:
+	iommu_mmu_notifier_ops
+	  +-> io_mm_release
+	    +-> io_mm->ops->clear
+	    arm-smmu-v3.c:
+	    arm_smmu_mm_ops->arm_smmu_mm_clear
+	      +-> arm_smmu_write_ctx_desc
+	        +-> __arm_smmu_write_ctx_desc
+		  +-> if (cd == &invalid_cd) 
+		    +-> CD.S = CD.R = 0;
+		  +-> arm_smmu_sync_cd
+		    +-> CD CFGI
+
+This will stop smmu stall and stop recore event in SMMU event q. device DMA will
+stop here and device will receive an internal hardware signal from SMMU.
+Normally device will report this as a RAS error.
+
+sva unbind flow:
+	iommu_sva_unbind_device
+	  [...]
+	  +-> arm_smmu_write_ctx_desc
+	    +-> __arm_smmu_write_ctx_desc
+	      +-> if (!cd)
+	        +-> cd val = 0;
+	      +-> arm_smmu_sync_cd
+	        +-> CD CFGI
+
+This will invalid CD(CD.valid = 0), if device DMA arrive SMMU here, maybe
+a SMMU bad CD event(0xa) will report. however, in uacce driver, the release
+callback will firstly stop q, then do sva unbind. So if q is stopped, we will
+not see SMMU bad CD event.

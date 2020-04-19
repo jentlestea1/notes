@@ -1,8 +1,94 @@
 ARM SMMUv3 architecture
------------------------
+=======================
 
 -v0.1 2017.3.12 Sherlock init
 -v0.2 2017.4.17 Sherlock add usage part
+-v0.3 2020.4.19 Sherlock 增加smmu的全局描述
+
+本文梳理IOMMU相关的整体软硬件设计的全貌。具体的硬件以ARM SMMUv3作为例子。
+
+IOMMU是外设的MMU。原来的外设主动发起的DMA的操作使用的都是系统的物理地址，直接
+使用物理地址有很多不方便的地方，在外设和内存之间引入一个新的IOMMU硬件，完成一些
+诸如地址翻译的功能，这样又有很多新的玩法可以加进来。
+
+加入IOMMU上的这个地址翻译，就可以引入翻译时候的权限管理，这样保证了外设发出的
+访问系统内存的地址是安全的。加上地址翻译，还可以把一片连续的虚拟地址空间映射到
+诸多离散的物理地址上，这样满足一部分设备要访问连续大地址的需要。IOMMU把外设
+变得更像CPU，CPU和外设在使用内存方面都只看到虚拟地址, 如果虚拟地址到物理地址的
+映射在CPU MMU和IOMMU上是一样的，CPU和外设将可以看到相同的虚拟地址空间。CPU MMU
+上的七七八八的功能上都可以在IOMMU上都加上。
+
+CPU core和MMU是绑在一起的，而IOMMU和外设是独立的两个设备, IOMMU一般是不做在
+外设里的，不然带IOMMU的外设有了地址管理的功能，对系统不安全。MMU上地址翻译的
+页表，不同进程切换的时候都要换一套, 外设并不能被进程独占，不同的进程可以同时
+给外设发请求, 广义上作为外设状态一部分的IOMMU自然也用有别MMU的方法描述不同外设
+在IOMMU的地址翻译配置。
+
+为了说明白整个IOMMU/SMMU的大体架构, 大概要说清楚一下几个方面：
+
+1. IOMMU(以下都用SMMU)是一个什么设备，它在系统中的位置和作用是什么。
+
+2. 固件(UEFI)里如何描述SMMU和系统其他部件的关系(PCI, GIC), 如何描述SMMU和它
+   管理的外设的关系。系统软件(一下都用Linux内核)如何解析，进而构建这种关系。
+
+3. SMMU硬件都提供怎么样的功能, SMMU使用怎么样的软硬件结构来支持这样的功能。
+   Linux内核如何构建SMMU硬件需要的执行环境。SMMU驱动运行时如何工作。
+
+4. SMMU驱动怎么对外提供功能，外界访问IOMMU/SMMU的接口有哪些。IOMMU这一层如何支持
+   IOMMU的对外接口。
+
+5. SMMU的虚拟化(S1 + S2)是怎么用起来的。
+
+
+下面来一一介绍下上面的内容。
+
+1. SMMU的固件描述和Linux解析
+----------------------------
+
+2. SMMU功能简介
+---------------
+
+3. SMMU驱动分析
+---------------
+
+  struct arm_smmu_device 描述一个物理的SMMU设备。
+
+  struct fwnode_handle 描述struct iommu_device的固件描述。
+
+  struct arm_smmu_master 描述SMMU物理设备所管理的一个外设, 这个外设可以对应一组
+  stream id, 但是一般是一个外设一个stream id。
+
+  struct device
+    +-> struct dev_iommu 一个外设device里和iommu相关的东西
+      +-> struct iommu_fwspec 一个外设device和iommu硬件相关的东西
+        +-> struct fwnode_handle iommu_device的固件描述
+
+  struct iommu_ops iommu驱动里和具体iommu设备相关的回调函数。
+    +-> arm_smmu_add_device:
+        创建外设对应的arm_smmu_master结构, 创建外设对应的iommu_group
+	外设和SMMU的关系怎么传给这个函数的？很明显在这个函数调用之前外设device
+	之中的iommu_fwspece已经被赋值。这个赋值的地方在[1]中已经提到，就是
+	pci_device_add(这里只看PCI设备的情况)，基本逻辑是PCI设备在被加入系统中
+	的时候调用acpi_dma_configure找见它自己的RC，从而找见对应的SMMU。
+
+	arm_smmu_add_device这个函数在iommu层里被封装, 然后注册成总线的一个notifier:
+	  bus_set_iommu
+	    +-> iommu_bus_init
+	      +-> iommu_bus_notifier 
+	        +-> iommu_probe_device
+		  +-> ops->add_device
+
+	如上pci_device_add的最后会调用devcie_add向bus添加外设device, 这个过程
+	会出发以上notifier回调函数，最终调用到arm_smmu_add_device
+
+    +-> arm_smmu_attach_dev:
+        最终SMMU对应的外设的STE
+
+4. IOMMU接口分析
+----------------
+
+5. SMMU虚拟化分析
+-----------------
 
 In [1], we know how SMMU driver has been loaded in ACPI.
 

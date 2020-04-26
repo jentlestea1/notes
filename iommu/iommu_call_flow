@@ -44,9 +44,15 @@ CPU core和MMU是绑在一起的，而IOMMU和外设是独立的两个设备, IO
 
 1. SMMU的固件描述和Linux解析
 ----------------------------
+  
+  参考[2][3], ACPI(先不关注DT里的描述方法)在IORT表格里描述SMMU和系统里其他部件
+  的关系。
 
 2. SMMU功能简介
 ---------------
+
+  SMMU为外设提供和地址翻译相关的诸多功能。硬件上, SMMU用三个队列和两个表格支持
+  其基本功能。
 
 3. SMMU驱动分析
 ---------------
@@ -79,7 +85,7 @@ CPU core和MMU是绑在一起的，而IOMMU和外设是独立的两个设备, IO
 		  +-> ops->add_device
 
 	如上pci_device_add的最后会调用devcie_add向bus添加外设device, 这个过程
-	会出发以上notifier回调函数，最终调用到arm_smmu_add_device
+	会触发以上notifier回调函数，最终调用到arm_smmu_add_device
 
     +-> arm_smmu_attach_dev:
         最终SMMU对应的外设的STE
@@ -87,8 +93,12 @@ CPU core和MMU是绑在一起的，而IOMMU和外设是独立的两个设备, IO
 4. IOMMU接口分析
 ----------------
 
+  DMA接口，IOMMU接口(VFIO/UACCE)
+
 5. SMMU虚拟化分析
 -----------------
+
+  Nested SMMU的分析参见[4]。
 
 In [1], we know how SMMU driver has been loaded in ACPI.
 
@@ -174,3 +184,6 @@ The usage of smmu is: 1. DMA, 2. VM
 Reference
 
 [1] http://blog.csdn.net/scarecrow_byr/article/details/53844162
+[2] https://blog.csdn.net/scarecrow_byr/article/details/52348234
+[3] https://blog.csdn.net/scarecrow_byr/article/details/53844162
+[4] https://blog.csdn.net/scarecrow_byr/article/details/104606571

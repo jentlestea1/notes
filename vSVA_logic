@@ -99,23 +99,21 @@ vSVA逻辑分析
  基地址。对于预先在vcpu一侧有缺页的情况，这里S1可以查页表翻译，SMMU硬件在nested
  模式下，会对CD基地址做S2翻译的到CD的真正物理地址，然后找见页表做翻译。可见qemu
  里的SMMU驱动使用和host SMMU相同的驱动，初始化qemu里SMMU的CD.TT0, 然后把CD直接
- 通过系统调用配置到物理SMMU上。这里需要确认，物理SMMU得到CD的物理地址又怎么进一
- 步找到页表的，因为虚拟机里配置的页表基地址显然是一个IPA?
+ 通过系统调用配置到物理SMMU上。需要注意，这里CD里的页表基地址是IPA，SMMU硬件
+ 会先根据S2页表翻译IPA到PA得到页表物理基地址。
 
  对于dev传给SMMU的VA没有页表的情况, S1要做缺页处理。这里的缺页处理在逻辑上应该
  上报给guest，因为要做vSVA，是要给虚拟机里的进程的页表加页表项。Eric这组补丁里，
  在vfio里加了一个event queue的队列，mmap到host用户态，用来传递这个信息。逻辑上看，
  qemu应该处理并上报这个缺页请求，qemu里的SMMU驱动做缺页处理。在qemu的SMMU驱动做
  缺页处理的时候，来自dev的请求是stall在SMMU里的，所以，SMMU缺页处理完毕后，应该
- 有通知机制通知到host SMMU，使能stall的请求继续。同时，还应该有接口同步guest里的
- 页表项到物理SMMU?
+ 有通知机制通知到host SMMU，使能stall的请求继续。
 
  可以看到当页表有变动的时候，在guest和物理SMMU上同步页表的开销是很大的。
 
  当guest里的进程有退出或者内存有释放时，需要更新guest里进程的页表，vcpu tlb，
  host SMMU上相关进程页表和tlb。Eric补丁里vfio里提供了ioctl(VFIO_IOMMU_CACHE_INVALIDATE)
- 用来更新host SMMU上的相关tlb。这里不清楚vcpu是否可以做带VMID/ASID的DVM, 直接
- 无效化相关的tlb?
+ 用来更新host SMMU上的相关tlb。这里vcpu可以做带VMID/ASID的DVM, 直接无效化相关的tlb。
  
 3. virtio iommu
 ---------------

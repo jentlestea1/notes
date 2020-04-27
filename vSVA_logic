@@ -5,10 +5,8 @@ vSVA逻辑分析
 -v0.2 2020.4.16 Sherlock add missing pasid logic in guest.
 -v0.3 2020.4.27 Sherlock update vSMMU/SMMU CD base update.
 
-
 简介：本文分析Linux vSVA现在的构架逻辑，用于相关开发人员对齐认识。目前为止Linux
       vSVA的代码还在构架讨论和代码review阶段。
-
 
 0. qemu基础认识
 ---------------
@@ -96,16 +94,13 @@ vSVA逻辑分析
 
  目前Redhat的Eric在做ARM nested SMMU的支持，他把相关的补丁集合到了他的分支里，
  你可以在这个地方看到完整的内核补丁：https://github.com/eauger/linux branch:
- v5.6-2stage-v11_10.1。
-
- 这组补丁里给vfio
- 加了一个ioctl(VFIO_IOMMU_SET_PASID_TABLE), 用这个ioctl把虚拟机里的SMMU的CD地址
- (IPA)直接传给host，并且配置给物理SMMU的CD基地址。对于预先在vcpu一侧有缺页的情况，
- 这里S1可以查页表翻译，SMMU硬件在nested模式下，会对CD基地址做S2翻译的到CD的真正
- 物理地址，然后找见页表做翻译。可见qemu里的SMMU驱动使用和host SMMU相同的驱动，
- 初始化qemu里SMMU的CD.TT0, 然后把CD直接通过系统调用配置到物理SMMU上。这里需要确认，
- 物理SMMU得到CD的物理地址又怎么进一步找到页表的，因为虚拟机里配置的页表基地址
- 显然是一个IPA?
+ v5.6-2stage-v11_10.1。这组补丁里给vfio加了一个ioctl(VFIO_IOMMU_SET_PASID_TABLE)，
+ 用这个ioctl把虚拟机里的SMMU的CD地址(IPA)直接传给host，并且配置给物理SMMU的CD
+ 基地址。对于预先在vcpu一侧有缺页的情况，这里S1可以查页表翻译，SMMU硬件在nested
+ 模式下，会对CD基地址做S2翻译的到CD的真正物理地址，然后找见页表做翻译。可见qemu
+ 里的SMMU驱动使用和host SMMU相同的驱动，初始化qemu里SMMU的CD.TT0, 然后把CD直接
+ 通过系统调用配置到物理SMMU上。这里需要确认，物理SMMU得到CD的物理地址又怎么进一
+ 步找到页表的，因为虚拟机里配置的页表基地址显然是一个IPA?
 
  对于dev传给SMMU的VA没有页表的情况, S1要做缺页处理。这里的缺页处理在逻辑上应该
  上报给guest，因为要做vSVA，是要给虚拟机里的进程的页表加页表项。Eric这组补丁里，

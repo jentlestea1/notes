@@ -99,11 +99,34 @@ trasaction with va |
   上图把SMMU画的很大。一般的，一个SMMU物理硬件会同时服务几个外设，而每个外设又
   有可能可以独立的发出多个内存访问，这些内存访问需要靠SMMU相互区分，又要靠SMMU
   做地址翻译。SMMU硬件靠STE(stream table entry)和CD(context descriptor), 去区分
-  不同硬件以及相同硬件上的不用内存访问流。
+  不同硬件以及相同硬件上的不用内存访问流。如上STE和CD内存里的表格，SMMU硬件可以
+  认知这些表格，一个外设相关的内存访问信息放在一个STE里，一个外设上的一部分资源
+  的内存访问信息放在一个CD里。外设和STE的对应关系需要SID(stream id)建立联系，
+  对于PCI设备，他的SID一般就是BDF，外设硬件在发出的内存访问请求中带上BDF信息，
+  内存访问请求被SMMU解析，SMMU通过其中的SID找见对应的STE。外设的可以独立发内存
+  访问请求的单位(比如外设的一个队列)和CD的关系需要SSID(substream id)建立联系，
+  在PCI设备上，SSID对应的就是PCI协议里说的PASID，这个PASID一般从系统软件中申请
+  得到，然后分别配置到外设的内存访问单元，和STE一样，设备发出内存访问的时候会
+  带上这个PASID，SMMU根据PASID找见对应的CD。可以SMMU驱动需要先为对应的设备或者
+  设备的独立内存访问单元建立STE或者CD，以及填充STE和CD中的域段以支持随后设备的
+  内存访问。
 
+  STE和CD里包含页表，和MMU一样，为了加快翻译速度，SMMU也做了TLB。为了加快STE和
+  CD查找的速度，SMMU里也可能放STE和CD的cache。
+
+  SMMU的软硬件控制接口，包括SMMU的基本的MMIO寄存器，三个硬件队列。如上，这是三个
+  硬件队列中command queue用于软件向SMMU发送命令，event queue用于SMMU向软件报异常
+  事件(包括缺页)，pri queue是和PCI设备配合一起用的，用于硬件向软件上报外设的
+  page request请求。软件可以通过command queue向硬件发命令，SMMU的命令基本上可以
+  分为，配置无效化命令，比如无效掉SMMU cache的STE和CD；TLB无效化命令，缺页相关
+  的命令，比如用于继续stall请求的RESUME命令；prefetch命令(fix me: ...)；SYNC命令
+  (fix me: ...)
+  
 
 3. SMMU驱动分析
 ---------------
+
+  先介绍SMMU驱动相关的一些数据结构。
 
   struct arm_smmu_device 描述一个物理的SMMU设备。
 
@@ -134,9 +157,12 @@ trasaction with va |
 
 	如上pci_device_add的最后会调用devcie_add向bus添加外设device, 这个过程
 	会触发以上notifier回调函数，最终调用到arm_smmu_add_device
+	(fix me: 挂接dma_map_ops的分析)
 
     +-> arm_smmu_attach_dev:
         最终SMMU对应的外设的STE
+
+    (fix me: STE, CD的创建形态)
 
 4. IOMMU接口分析
 ----------------

@@ -166,18 +166,31 @@ trasaction with va |
 	的时候调用acpi_dma_configure找见它自己的RC，从而找见对应的SMMU。
 
 	但是，内核代码后来修改了这部分，现在的内核代码(v5.7-rc1)，把xxx_dma_configure
-	移到了really_probe里。已PCI总线为例，这里调用的是pci_dma_configure
+	移到了really_probe里。已PCI总线为例，这里调用的是pci_dma_configure:
+
+	pci_dma_configure
+	  +-> acpi_dma_configure
+	    +-> iort_iommu_configure 这个函数里创建device的iommu_fwspec
+	    +-> arch_setup_dma_ops 调到比如arm64的回调中
+	      +-> iommu_setup_dma_ops 在有iommu的情况下给device->dma_ops挂上iommu_dma_ops
+	      (诸如dma_alloc_coherent的dma接口在做dma相关的操作时，在有iommu的
+	       情况下，调用的就是这里挂在device->dma_ops里的各种回调函数)
+
+	上面说的是为啥arm_smmu_add_device这个函数调用到的时候，device入参里已经
+	有device->iommu_fwspec的域段，下面说arm_smmu_add_device这个函数怎么调用到：
 
 	arm_smmu_add_device这个函数在iommu层里被封装, 然后注册成总线的一个notifier:
-	  bus_set_iommu
+	smmu probe -> arm_smmu_set_bus_ops -> bus_set_iommu
 	    +-> iommu_bus_init
 	      +-> iommu_bus_notifier 
 	        +-> iommu_probe_device
 		  +-> ops->add_device
 
 	如上pci_device_add的最后会调用devcie_add向bus添加外设device, 这个过程
-	会触发以上notifier回调函数，最终调用到arm_smmu_add_device
-	(fix me: 挂接dma_map_ops的分析)
+	会触发以上notifier回调函数，最终调用到arm_smmu_add_device。注意，这里
+	really_probe在前，触发notifier执行在后。
+
+	下面看add_device都做了什么:
 
     +-> arm_smmu_attach_dev:
         最终SMMU对应的外设的STE

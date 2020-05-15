@@ -126,27 +126,47 @@ trasaction with va |
 3. SMMU驱动分析
 ---------------
 
-  先介绍SMMU驱动相关的一些数据结构。
+  SMMUv3相关的驱动的文件包括arm-smmu-v3.c, io-pgtable-arm.c,
+  drivers/perf/arm_smmuv3_pmu.c。第一个文件是smmu驱动的主体，第二个文件是和
+  页表相关的操作，第三个文件是和SMMU PMU(PMCG)相关的东西。第一二个文件编译出来
+  SMMU驱动，第三个文件编译出SMMU PMCG驱动。
 
+  SMMU驱动是一个普通的平台设备驱动。这驱动的probe函数里初始化SMMU硬件，包括：
+  ACPI/DTS解析，中断初始化，硬件特性解析，SMMU STE初始化，probe里还把SMMU向
+  iommu子系统注册，以及把iommu_ops回调函数注册给SMMU结构和总线。
+
+  这其中涉及的SMMU驱动相关的一些数据结构包括：
+```
   struct arm_smmu_device 描述一个物理的SMMU设备。
-
   struct fwnode_handle 描述struct iommu_device的固件描述。
-
   struct arm_smmu_master 描述SMMU物理设备所管理的一个外设, 这个外设可以对应一组
-  stream id, 但是一般是一个外设一个stream id。
-
+                         stream id, 但是一般是一个外设一个stream id。
   struct device
     +-> struct dev_iommu 一个外设device里和iommu相关的东西
       +-> struct iommu_fwspec 一个外设device和iommu硬件相关的东西
         +-> struct fwnode_handle iommu_device的固件描述
+```
+  probe里的流程比较直白：
+```
+  arm_smmu_device_probe
+    ...
+    +-> arm_smmu_device_hw_probe 探测各种硬件配置信息
+    +-> arm_smmu_init_structures 初始化cmd, event, pri队列的内存, 初始化STE表,
+                                 如果是两级STE表，只初始化L1 STE
+    +-> iommu_device_register 向iommu子系统注册SMMU
+    +-> arm_smmu_set_bus_ops 向pci，amba或者platform总线注册iommu_ops
+```
 
-  struct iommu_ops iommu驱动里和具体iommu设备相关的回调函数。
+  struct iommu_ops和具体iommu设备相关的回调函数需要通过上层的接口使用。
     +-> arm_smmu_add_device:
-        创建外设对应的arm_smmu_master结构, 创建外设对应的iommu_group
+        创建外设对应的arm_smmu_master结构, 创建外设对应的iommu_group。
 	外设和SMMU的关系怎么传给这个函数的？很明显在这个函数调用之前外设device
 	之中的iommu_fwspece已经被赋值。这个赋值的地方在[1]中已经提到，就是
 	pci_device_add(这里只看PCI设备的情况)，基本逻辑是PCI设备在被加入系统中
 	的时候调用acpi_dma_configure找见它自己的RC，从而找见对应的SMMU。
+
+	但是，内核代码后来修改了这部分，现在的内核代码(v5.7-rc1)，把xxx_dma_configure
+	移到了really_probe里。已PCI总线为例，这里调用的是pci_dma_configure
 
 	arm_smmu_add_device这个函数在iommu层里被封装, 然后注册成总线的一个notifier:
 	  bus_set_iommu

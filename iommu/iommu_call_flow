@@ -188,7 +188,8 @@ trasaction with va |
 
 	如上pci_device_add的最后会调用devcie_add向bus添加外设device, 这个过程
 	会触发以上notifier回调函数，最终调用到arm_smmu_add_device。注意，这里
-	really_probe在后，触发notifier执行在前。
+	really_probe在后，触发notifier执行在前。触发notifier在设备加载的时候，
+	而really_probe在驱动加载的时候。
 
 	下面看add_device都做了什么:
 	add_device
@@ -202,6 +203,15 @@ trasaction with va |
 
 	也就是说，一般先枚举设备，再insmod驱动的场景，只有在驱动加载的时候才会
 	生成device结构里的iommu_fwspec。
+
+	但是，实际跟踪执行流程，你会发现对于一个外设的arm_smmu_add_device调用是
+	发生在对应的设备驱动加载的时候。这是因为smmu驱动加载比pci驱动晚，add_device
+	想要触发notifier时，因为smmu驱动没有加载，notifier都还没有注册，自然也
+	不会在add_device这个流程中触发arm_smmu_add_device这个函数。那么really_probe
+	为啥会最终调用到arm_smmu_add_device? 这是因为在iort_iommu_configure里
+	调用了iort_add_device_replay->iommu_probe_device。综上struct device里的
+	和iommu有关的struct dev_iommu，以及iommu_fwspec都是在iort_iommu_configure
+	里创建的。
 
     +-> arm_smmu_attach_dev:
         最终SMMU对应的外设的STE

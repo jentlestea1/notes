@@ -213,8 +213,18 @@ trasaction with va |
 	和iommu有关的struct dev_iommu，以及iommu_fwspec都是在iort_iommu_configure
 	里创建的。
 
+	如最开始所述，这个arm_smmu_add_device创建特定外设在smmu处的各种描述信息。
+	其中包括，创建arm_smmu_master, 建立设备对应的STE entry，初始化设备的
+	pasid，pri功能，建立这个设备相关的iommu_group和iommu_domain, 在这个过程
+	中会调用smmu ops里的device_group和domain_alloc。
+
     +-> arm_smmu_attach_dev:
-        最终SMMU对应的外设的STE
+        这个函数的入参是，struct iommu_domain, struct device。这里的domain表示
+	的是一种使用方式。也就是说这里是把一个device和一种使用方式建立起联系。
+	注意，上面的add_device是把一个外设加入到smmu这个系统里来。
+
+	所以，我们可以看下iommu_domain的各种不同类型，以及内核里的不同子系统是
+	怎么调用这个函数的，以及这个函数到底做了什么。
 
     (fix me: STE, CD的创建形态)
 

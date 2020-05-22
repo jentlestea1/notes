@@ -216,108 +216,69 @@ trasaction with va |
 	如最开始所述，这个arm_smmu_add_device创建特定外设在smmu处的各种描述信息。
 	其中包括，创建arm_smmu_master, 建立设备对应的STE entry，初始化设备的
 	pasid，pri功能，建立这个设备相关的iommu_group和iommu_domain, 在这个过程
-	中会调用smmu ops里的device_group和domain_alloc。
+	中会调用smmu ops里的device_group, domain_alloc以及attach_dev。
+
+        架构设计上，iommu_group描述共享一个地址空间的设备的集合, iommu_domain
+	打包地址翻译的类型以及为具体的iomm_domain实现提供桥梁，比如arm_smmu_domain。
+	iommu_ops里的有些操作，比如，map会最终调用到arm_smmu_domain->io_pagetable_ops->map
+
+	arm_smmu_add_device
+	  +-> iommu_group_get_for_dev
+	    +-> iommu_group_add_device
+	      +-> __iommu_attach_device
+	        +-> arm_smmu_attach_dev
+	里创建iommu_group, iommu_domain, 并最终调用到arm_smmu_attach_dev。可以看到
+	先按全局变量iommu_def_domain_type创建domain, 再用iommu_domain_set_attr
+	补充设置domain的attr。一般domain的type有IDENTITY, UNMANAGED, DMA。IDENTITY
+        是IOMMU不做处理，DMA是在内核里使用IOMMU，UNMANAGED是把IOMMU的能力暴露出去
+	给其他模块使用，现在一般是VFIO和SVA再用UNMANAGED domain。attr用来区分
+	domain里更细一步的配置，比如，arm_smmu_domain_set_attr里，对于DMA domain,
+	用attr区分non_strict mode; 对于UNMANAGED domain, 用attr区分Nested的使用
+	方式。可以看到UNMANAGED domain时, 如果只用一个stage，用的是stage1; 对于
+	内核的DMA流程，一般顺着这个调用关系下来，但是，对于UNMANAGED domain和
+	Nested，iommu还有其他对外接口，提供配置的方法。
+
+	下面看arm_smmu_attach_dev里具体干了什么。
 
     +-> arm_smmu_attach_dev:
-        这个函数的入参是，struct iommu_domain, struct device。这里的domain表示
-	的是一种使用方式。也就是说这里是把一个device和一种使用方式建立起联系。
+        这个函数的入参是，struct iommu_domain, struct device。如上，这里的domain
+	表示的是一种使用方式。也就是说这里是把一个device和一种使用方式建立起联系。
 	注意，上面的add_device是把一个外设加入到smmu这个系统里来。
 
-	所以，我们可以看下iommu_domain的各种不同类型，以及内核里的不同子系统是
+	如上，我们可以看下iommu_domain的各种不同类型，以及内核里的不同子系统是
 	怎么调用这个函数的，以及这个函数到底做了什么。
 
-    (fix me: STE, CD的创建形态)
+	这个函数对于特定的设备，根据传进来的domain类型, 初始化具体domain的相关
+	操作函数，然后配置STE生效:
+	arm_smmu_attach_dev
+	  +-> arm_smmu_domain_finalise
+	    +-> arm_smmu_domain_finalise_xxx[cd, s1, s2]
+	    +-> smmu_domain->pgtbl_ops = alloc_io_pgtable_ops
+	  +-> arm_smmu_install_ste_for_dev
+	可见arm_smmu_domain_finalise里首先根绝smmu_domain里stage的配置，去配置
+	smmu的CD,或者STE和s2相关的内容。然后，把对应的页表操作函数赋值给smmu_domain
+	里的回调函数: smmu_domain->pgtbl_ops。以后，iommu_ops里的mmap，unmap函数
+	直接会调用到这里。
+
+	iommu_attach_group, iommu_attach_device, iommu_group_add_device,
+	iommu_request_dm_for_dev, iommu_request_dma_domain_for_dev都会最终调用到
+	attach_dev这个回调。在vfio里会使用到iommu_attach_group, iommu_attach_device,
+	vfio会用UNMANAGED domain。(具体逻辑： todo)
+
+ 	(fix me: SVA和这里的逻辑)
 
 4. IOMMU接口分析
 ----------------
 
-  DMA接口，IOMMU接口(VFIO/UACCE)
+  DMA接口和IOMMU的关系在上面已给出。
+
+  VFIO/SVA和IOMMU接口的关系：todo
+  SVA的简单介绍参见[5]
 
 5. SMMU虚拟化分析
 -----------------
 
   Nested SMMU的分析参见[4]。
-
-In [1], we know how SMMU driver has been loaded in ACPI.
-
-During the driver loading, arm_smmu_device_probe will be called. Most part of
-this function is to initiate SMMU hardware. 
-
-Then add smmu to a global list by: iommu_device_register(&smmu->iommu)
-
-Then bus_set_iommu(&pci_bus_type, &arm_smmu_ops), set iommu_ops for a specific
-bus, and call iommu_bus_init(bus, ops) ->  bus_register_notifier(bus, nb) to
-register a notifier_block to above bus. the notifier callback is iommu_bus_notifier
-which will call add_device in SMMU's iommu_ops:
-```
-/* drivers/iommu/arm-smmu-v3.c */
-arm_smmu_device_probe
-    --> bus_set_iommu(&pci_bus_type, &arm_smmu_ops)
-        --> iommu_bus_init(bus, ops)
-                /* here notifier's callback is iommu_bus_notifier */
-            --> bus_register_notifier(bus, nb)
-
-/* drivers/iommu/iommu.c */
-iommu_bus_notifier
-        /* action == BUS_NOTIFY_ADD_DEVICE, here ops is iommu_ops */
-    --> ops->add_device
-```
-
-When a device is adding to a bus, above  notifier callback will be called:
-```
-/* drivers/base/core.c */
-device_add(struct device *dev)
-    --> blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
-                                     BUS_NOTIFY_ADD_DEVICE, dev);
-```
-```
-/* In drivers/iommu/arm-smmu-v3.c, create related iommu_group for dev */
-arm_smmu_add_device(struct device *dev)
-        /* reture an iommu_group about this device */
-    --> iommu_group_get_for_dev(dev)
-        --> ops->device_group(dev)
-                /* there is a algrithm to find/create one iommu_group?? */
-            --> pci_device_group
-            /* arm_smmu_domain_alloc, one iommu_group <-> one iommu_domain */
-        --> __iommu_domain_alloc
-            /* add a dev to a iommu_group */
-        --> iommu_group_add_device(group, dev)
-            --> __iommu_attach_device
-                domain->ops->attach_dev(domain, dev)
-                    --> arm_smmu_domain_finalise(domain)
-                        /* important!!! */
-                    --> arm_smmu_install_ste_for_dev(dev->iommu_fwspec)
-                    
-                /* here is another notifier call chain call? */
-            --> blocking_notifier_call_chain(&group->notifier,
-                IOMMU_GROUP_NOTIFY_ADD_DEVICE, dev);
-```
-The usage of smmu is: 1. DMA, 2. VM
-
-- DMA usage
-
-  We can go on in [1] to see how a PCIe device use SMMU to do DMA
-```
-  pci_device_add
-          /* In v4.12, this function will be moved to really_probe */
-      --> pci_dma_configure
-          --> acpi_dma_configure
-              --> arch_setup_dma_ops
-                  --> __iommu_setup_dma_ops
-                      --> do_iommu_attach
-                              /*
-                               * above __iommu_domain_alloc just allocate an
-                               * iommu_domain. here we initialize the iova domain
-                               * in it.
-                               * we do not do the map here.
-                               */
-                          --> iommu_dma_init_domain(domain, dma_base, size, dev)
-                          --> dev->dma_ops = &iommu_dma_ops
-```
-
-- VM usage
-
-  to do...
 
 Reference
 
@@ -325,3 +286,4 @@ Reference
 [2] https://blog.csdn.net/scarecrow_byr/article/details/52348234
 [3] https://blog.csdn.net/scarecrow_byr/article/details/53844162
 [4] https://blog.csdn.net/scarecrow_byr/article/details/104606571
+[5] https://blog.csdn.net/scarecrow_byr/article/details/100983619

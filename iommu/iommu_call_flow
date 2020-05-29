@@ -119,8 +119,7 @@ trasaction with va |
   事件(包括缺页)，pri queue是和PCI设备配合一起用的，用于硬件向软件上报外设的
   page request请求。软件可以通过command queue向硬件发命令，SMMU的命令基本上可以
   分为，配置无效化命令，比如无效掉SMMU cache的STE和CD；TLB无效化命令，缺页相关
-  的命令，比如用于继续stall请求的RESUME命令；prefetch命令(fix me: ...)；SYNC命令
-  (fix me: ...)
+  的命令，比如用于继续stall请求的RESUME命令；prefetch命令；SYNC命令。
   
 
 3. SMMU驱动分析
@@ -265,15 +264,17 @@ trasaction with va |
 	attach_dev这个回调。在vfio里会使用到iommu_attach_group, iommu_attach_device,
 	vfio会用UNMANAGED domain。(具体逻辑： todo)
 
- 	(fix me: SVA和这里的逻辑)
-
 4. IOMMU接口分析
 ----------------
 
   DMA接口和IOMMU的关系在上面已给出。
 
-  VFIO/SVA和IOMMU接口的关系：todo
-  SVA的简单介绍参见[5]
+  目前社区正在上传SVA的相关补丁，SVA的接口也是IOMMU子系统对外接口的一部分, 这
+  一部分的分析可以参见[5]。目前的SVA接口使用的是DMA domain, 通过SVA的接口触发
+  在STE表里建立SSID非零的CD表，从而可以实现一个外设，一部分在内核态使用(使用CD0),
+  一部风在用户态使用(使用其他CD)。
+
+  VFIO重度使用IOMMU接口, 从这个角度看IOMMU子系统的对外接口参见[6]
 
 5. SMMU虚拟化分析
 -----------------
@@ -287,3 +288,4 @@ Reference
 [3] https://blog.csdn.net/scarecrow_byr/article/details/53844162
 [4] https://blog.csdn.net/scarecrow_byr/article/details/104606571
 [5] https://blog.csdn.net/scarecrow_byr/article/details/100983619
+[6] https://blog.csdn.net/scarecrow_byr/article/details/51494401

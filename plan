@@ -8,7 +8,7 @@
 7. dma buf子系统分析 
 8. android ion分析
 
-9. smmu series
+9. smmu series		  xx
    1. smmu spec导读
    2. smmu linux软件构架分析
    3. smmu 细节专题
@@ -28,6 +28,10 @@
     taskset -c cpu, irq binding: irq_set_affinity_hint, pci_alloc_irq_vectors_affinity?
 16. spinlock实现分析
 17. autotools
+
+18. KAE
+19. UML
+20. pthread
 
 1. perf
 2. memory

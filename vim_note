@@ -4,3 +4,8 @@ vim使用技巧
 1. 水平创建一个terminal:
 
    vert term
+
+2. term
+
+3. ctrl + w ctrl + n
+   打开的terminal进入vim的normal模式，可以使用vim的复制命令复制信息到原来的窗口里。

@@ -1,30 +1,56 @@
-1. 宏展开 + #
-2. 各种截断数据
-3. 八进制 print
-4. 大小端和位域转换 http://mjfrazer.org/mjfrazer/bitfields/
-5. 完全二叉树中叶子节点的个数  (N + 1) / 2
-6. 快排 # 各种时间空间复杂度
-7. auto
-8. setjmp, longjmp
-9. 安全函数
-10. 可变参数
-11. strcmp
-12. scanf
-13. ASCII A 在 a前， 差32
-14. realloc https://www.cnblogs.com/zhaoyl/p/3954232.html
-15. 快排实现
-16. 二维数组和指针 ？（汇总22）
-17. const指针：const char * const * p;
-18. double的格式??
-19. printf %n
-20. 不可重入函数 ？
-21. float类型不能比较相等，不相等？
-22. sizeof() 返回一个unsigned int?
-23. 有符号数和无符号数运算、赋值？https://akaedu.github.io/book/ch15s03.html ?
-24. 浮点数运算：(1.2 + 3.8) / 5.0
-25. 不要主动调用pthread_exit
-26. setjmp/longjmp https://www.cnblogs.com/hazir/p/c_setjmp_longjmp.html
-27. c语言自动类型转换
-28. 有符号右移，带符号位右移
-29. c中简单结构体直接复制是ok的
-30. int fun(int a[10])的入参和指针一样
+C语言note
+=========
+
+ -v0.1 2020.8.12 Sherlock init
+
+1. 宏
+-----
+
+  ## #
+
+2. 自动数据类型转换
+-------------------
+
+  各种截断数据
+  float类型不能比较相等，不相等
+  sizeof() 返回一个unsigned int
+  有符号数和无符号数运算、赋值: https://akaedu.github.io/book/ch15s03.html
+  有符号右移，带符号位右移
+
+3. 大小端和位域
+---------------
+
+  http://mjfrazer.org/mjfrazer/bitfields/
+
+4. 格式化打印
+-------------
+  八进制 print
+  printf %n
+
+5. 长跳转
+---------
+
+  setjmp, longjmp: https://www.cnblogs.com/hazir/p/c_setjmp_longjmp.html
+
+6. 可变参数函数
+---------------
+
+7. realloc
+----------
+
+  https://www.cnblogs.com/zhaoyl/p/3954232.html
+
+8. 二维数组和指针
+-----------------
+
+9. const指针
+------------
+
+  const char * const * p;
+
+10. double类型的存储格式
+------------------------
+
+其他：
+  c中简单结构体直接复制是ok的
+  int fun(int a[10])的入参和指针一样

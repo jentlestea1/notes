@@ -69,11 +69,33 @@ test 5: 19
 
   http://mjfrazer.org/mjfrazer/bitfields/
 
+  这个实例说明为什么写代码的时候，特别是涉及底层硬件寄存器操作的驱动代码，尽量
+  不要用位域。原因是在大小端不同的系统上，位域的表示方法是不同的。
+
 4. 格式化打印
 -------------
 
-  八进制 print
-  printf %n
+  printf %n: 已输出的字符数目(用户对齐下一行的输出比较有用 :))
+```
+#include <stdio.h>
+
+int main()
+{
+	int num;
+
+	printf("123456:%n\n", &num);
+	printf("%*c %d\n", num, ' ', 123);
+	printf("%*c %d\n", num, ' ', 456);
+
+	return 0;
+}
+
+输出：
+xxx@kllp05:~/tests/c_note$ ./a.out 
+123456:
+        123
+        456
+```
 
 5. 长跳转
 ---------
@@ -82,6 +104,8 @@ test 5: 19
 
 6. 可变参数函数
 ---------------
+
+  https://www.cnblogs.com/cpoint/p/3368993.html
 
 7. realloc
 ----------
@@ -94,9 +118,8 @@ test 5: 19
 9. const指针
 ------------
 
-  const char * const * p;
-  char * const * p;
-  char ** const p;
+  const char ** p; char * const * p; char ** const p;
+  分别是**p, *p, p是常量。
 
 10. double类型的存储格式
 ------------------------

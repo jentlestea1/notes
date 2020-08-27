@@ -30,10 +30,15 @@
 17. autotools, Makefile.am, vim terminal, 编译连接库
 
 18. KAE  xx
-19. UML
 20. pthread
 
 1. perf
 2. memory
 3. ARM compile
+
+linux poll
+UML
+automake
+preempt
+eBPF
 

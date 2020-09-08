@@ -41,4 +41,7 @@ UML
 automake
 preempt
 eBPF
-
+kprobe
+tracepoint
+uprobe
+各种火焰图：cpu，memory, offcpu

@@ -45,3 +45,5 @@ kprobe
 tracepoint
 uprobe
 各种火焰图：cpu，memory, offcpu
+uml note
+aead digest note

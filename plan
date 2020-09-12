@@ -48,3 +48,6 @@ uprobe
 uml note   xx
 rsa aead digest note   1
 getopt_long  1
+
+/proc/irq/irq_id/xxx
+/proc/pid/xxx/

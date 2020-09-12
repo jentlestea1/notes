@@ -39,12 +39,12 @@
 linux poll  1
 UML
 automake
-preempt  1
+preempt   xx
 eBPF
 kprobe
 tracepoint  1
 uprobe
 各种火焰图：cpu，memory, offcpu
-uml note   1
+uml note   xx
 rsa aead digest note   1
 getopt_long  1

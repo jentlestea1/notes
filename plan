@@ -36,14 +36,15 @@
 2. memory
 3. ARM compile
 
-linux poll
+linux poll  1
 UML
 automake
-preempt
+preempt  1
 eBPF
 kprobe
-tracepoint
+tracepoint  1
 uprobe
 各种火焰图：cpu，memory, offcpu
-uml note
-aead digest note
+uml note   1
+rsa aead digest note   1
+getopt_long  1

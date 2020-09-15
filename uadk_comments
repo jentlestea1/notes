@@ -1,0 +1,37 @@
+sched:
+
+1. sec/hpre里把sched用起来？
+2. hisi_sched_test里的build.sh太hack了
+3. hisi_sched_test这个其实是sched的ut, 后续可以删掉
+
+sec:
+
+1. cipher还是一把全局锁
+2. get_msg_from_pool里的锁可以去掉(上次已经对齐这里)
+3. digest还是一把全局锁
+
+hpre:
+
+1. 使用HAVE_OPENSSL改造测试代码
+2. 没有使用的代码删除
+
+zip:
+
+1. 测试代码还没有统一
+2. zip_sva_test.c warning需要清理
+
+公共：
+
+1. pool相关的代码抽出来，各个算法层复用
+2. 所有算法代码，get_msg_from_pool直接用index做入参，避免全局搜索
+3. 缺编译、测试指导文档(docs里)
+4. 所有文件的license用SPDK的简短申明
+5. 一次编译出所有动态库和静态库
+6. 交叉编译，编译成动态库(config.sh), 所有test app编译得到的是shell脚本
+7. sec/hpre缺乏和SVA相关的测试用例(e.g. DVM, 预缺页, 大页...)
+
+下一步：
+
+1. 性能测试，并发测试，长时间测试
+2. 增加sched类型。配置参数搞成配置文件
+...

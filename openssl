@@ -1,0 +1,29 @@
+openssl enc -aes-128-cbc -in key -out key_encrypt -K 12345678901234567890 -iv 12345678
+openssl enc -aes-128-cbc -in key_encrypt -out key_decrypt -K 12345678901234567890 -iv 12345678 -d
+
+0. x86环境
+
+1. autoreconf -i之后./configure会报错:
+```
+[...]
+checking openssl/engine.h usability... yes
+checking openssl/engine.h presence... yes
+checking for openssl/engine.h... yes
+./configure: line 12699: syntax error near unexpected token `newline'
+./configure: line 12699: `AX_CHECK_OPENSSL('
+```
+
+hack: 手动删掉对应的AX_CHECK_OPENSSL段, 重新configure.
+
+2. make;
+
+3. 把.libs中编译生成的libuseless.so名字改成useless.so，然后copy到
+   /usr/lib/x86_64-linux-gnu/engines-1.1/
+
+4. 运行命令测试:
+```
+wangzhou@kllp05:~/tests/openssl/Lesson-1-A-useless-example$ openssl engine -t -c useless
+(useless) A useless engine for demonstration purposes
+     [ available ]
+```
+wangzhou@kllp05:~/tests/openssl/Lesson-1-A-useless-example$ openssl engine -t -c useless

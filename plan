@@ -47,6 +47,10 @@ uprobe
 uml note   xx
 rsa aead digest (aes-ccm, aes-gcm, cbc(aes128)-hmac(sha256)), sm2 256bit key, dh(公钥生成，和生成共享秘钥) x25519/x448
 getopt_long  1
+lock test
 
 /proc/irq/irq_id/xxx
 /proc/pid/xxx/
+crypto ahash
+sm2
+dh

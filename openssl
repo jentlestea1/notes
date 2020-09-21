@@ -27,3 +27,5 @@ wangzhou@kllp05:~/tests/openssl/Lesson-1-A-useless-example$ openssl engine -t -c
      [ available ]
 ```
 wangzhou@kllp05:~/tests/openssl/Lesson-1-A-useless-example$ openssl engine -t -c useless
+
+https://blog.csdn.net/henter/article/details/81903692

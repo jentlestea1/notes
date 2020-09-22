@@ -7,11 +7,6 @@ sched:
 
 sec:
 
-1. cipher还是一把全局锁
-2. get_msg_from_pool里的锁可以去掉(上次已经对齐这里)
-3. digest还是一把全局锁
-4. digest还是用的自定义的sched
-
 hpre:
 
 1. 使用HAVE_OPENSSL改造测试代码
@@ -19,7 +14,6 @@ hpre:
 zip:
 
 1. zip_sva_test.c 里的测试case需要合入test_sva_perf
-2. zip_sva_test.c warning需要清理
 
 公共：
 

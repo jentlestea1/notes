@@ -17,15 +17,13 @@ zip:
 
 公共：
 
-3. 缺编译、测试指导文档(docs里)
-4. 所有文件的license用SPDK的简短申明
 5. 一次编译出所有动态库和静态库
 6. 交叉编译，编译成动态库(config.sh), 所有test app编译得到的是shell脚本
 7. sec/hpre缺乏和SVA相关的测试用例(e.g. DVM, 预缺页, 大页...)
 8. 所有算法层的异步msg pool都是为每个ctx都分配了，没有区分同步异步
 9. comp, cipher的poll_ctx没有加锁
 10. 全局变量中的g前缀去掉 g_xxx -> xxx
-11. zip，sec的测试app的返回值任何情况都是0，这样别的程序无法使用
+11. zip的测试app的返回值任何情况都是0，这样别的程序无法使用
 
 下一步：
 

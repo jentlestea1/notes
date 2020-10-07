@@ -54,3 +54,4 @@ lock test
 crypto ahash
 sm2
 dh
+vscode ##

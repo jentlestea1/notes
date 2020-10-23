@@ -29,3 +29,22 @@ wangzhou@kllp05:~/tests/openssl/Lesson-1-A-useless-example$ openssl engine -t -c
 wangzhou@kllp05:~/tests/openssl/Lesson-1-A-useless-example$ openssl engine -t -c useless
 
 https://blog.csdn.net/henter/article/details/81903692
+
+公钥加密：
+openssl rsautl -encrypt -in rsa_test -inkey test_pub.key -pubin -out rsa_test.en -engine uadk
+
+公钥生成：
+openssl rsa -in test.key -pubout -out test_pub.key -engine uadk
+
+私钥生成:
+openssl genrsa -out test.key -engine uadk 4096
+
+私钥解密：
+openssl rsautl -decrypt -in rsa_test.en -inkey test.key -out rsa_test.de -engine uadk
+
+签名：
+openssl rsautl -sign -in msg.txt -inkey prikey.pem -out signed.txt -engine uadk
+
+认证：
+openssl rsautl -verify -in signed.txt -inkey pubkey.pem -pubin -out verified.txt -engine uadk
+

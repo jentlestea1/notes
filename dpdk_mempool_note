@@ -24,25 +24,27 @@ app可以大概看出如何使用rte_mempool。
 基本的构架是：
 -------------
 ```
-     cpu0       local_cache
-
-
-
-     cpu1	local_cache           rte_ring              memzone
-
-
-
-
-
-     
-
-     cpuN	local_cache
+               +------------+
+     cpu0      |local_cache |----+
+               +------------+    |
+                                 |
+               +------------+    +-> +---------+           +-------------+
+     cpu1      |local_cache |------> |rte_ring |---------->|memory block |
+               +------------+    +-> +---------+           +-------------+
+                                 |
+                                 |
+                                 |
+                                 |
+                                 |
+               +------------+    |
+     cpuN      |local_cache |----+
+               +------------+
 ```
-支持mempool的基本数据结构式，local_cache, rte_ring, memzone。memzone是要管理的
-内存，一般是大页内存。rte_ring是一个无锁队列，用来管理memzone, rte_ring的entry
-个数等于memzone里block的个数。rte_ring用cmp and change的原子指令实现无锁队列，
-但是，在多核的时候，这个指令的开销也很大，所以为每一个cpu建立了block内存的cache，
-cpu先从自己的cache里取block内存，不够的时候再去rte_ring里批量取。
+支持mempool的基本数据结构式，local_cache, rte_ring, memzone。memzone是分配的
+内存(包括管理需要的内存)，一般是大页内存。rte_ring是一个无锁队列，用来管理内存,
+rte_ring的entry个数等于memory里block的个数。rte_ring用cmp and change的原子指令
+实现无锁队列，但是，在多核的时候，这个指令的开销也很大，所以为每一个cpu建立了
+block内存的cache，cpu先从自己的cache里取block内存，不够的时候再去rte_ring里批量取。
 
 具体实现的关键点：
 -----------------
@@ -57,12 +59,14 @@ rte_mempool_create
     +-> mempool_ops_alloc_onece
       +-> rte_mempool_ops_alloc
         +-> ops->alloc
+  /* 被管理的memory memzone的申请 */
+  +-> rte_mempool_populate_default 
 
 在dpdk/drivers/mempool/ring/rte_mempool_ring.c里有alloc的实现：
 ring_alloc
   +-> rte_ring_create
     +-> rte_ring_create_elem
-       /* memzone的申请在这个地方 */
+       /* ring memzone的申请在这个地方 */
        +-> rte_memzone_reserve_aligned
        /* ring的初始化 */
        +-> rte_ring_init

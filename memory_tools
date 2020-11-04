@@ -4,6 +4,9 @@ Linux内存相关测试工具
 1. smem
 -------
 
+ USS, PSS, RSS, VSS
+
+
 2. /proc/buddyinfo
 ------------------
 
@@ -18,3 +21,9 @@ Linux内存相关测试工具
 
 6. mallopt
 ----------
+
+7. mbind/madvise
+----------------
+
+8. getrusage
+------------

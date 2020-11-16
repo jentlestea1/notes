@@ -1,0 +1,11 @@
+linux巨页的使用
+===============
+
+-v0.1 2020.11.16 Sherlock init
+
+linux内核支持两种巨页的使用方法，一种是普通巨页，一种是透明巨页。本文介绍的是
+普通巨页的使用。普通巨页的内核说明文档在linux/Documentation/admin-guide/mm/hugetlbpage.rst
+
+使用巨页需要在内核编译的时候打开相关的配置选项：CONFIG_HUGETLBFS, CONFIG_HUGETLB_PAGE
+
+使能系统的巨页可以通过内核的启动参数或者是/sys/kernel/mm/hugepages/下的文件。

@@ -58,12 +58,12 @@ vscode ##
 linux dbus
 
 memory tools
-tailq                    xx
-hugepage
-pin kernel page
+tailq                     xx
+hugepage		  xx
+pin kernel page		  xx
 bit map
 xarray
 open share lib problem
 share lib name
 github review code
-dpdk mempool		xx
+dpdk mempool		  xx

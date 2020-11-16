@@ -41,8 +41,8 @@ hugepages/
     ├── resv_hugepages
     └── surplus_hugepages
 ```
-可以看到在hugepages目录下为每个巨页大小都开了专门的目录。可以看到在我的系统上
-ARM64，巨页有64KB，32KB，2MB，1GB四种类型。向nr_hugepages写数值可以创建指定数目
+可以看到在hugepages目录下为每个巨页大小都开了专门的目录。可以看到在我的ARM64
+系统上，巨页有64KB，32KB，2MB，1GB四种类型。向nr_hugepages写数值可以创建指定数目
 的巨页，读free_hugepages可以得到还没有使用的巨页数目。
 
 一般巨页属于系统配置，我们只去使用，不去更改配置。使用的方法是在mmap的时候在
@@ -51,7 +51,7 @@ flags参数中加上MAP_HUGETLB。如果只用MAP_HUGETLB，巨页的分配算�
 页出来就好了，内核可能是从2MB里分配的，实际上，用5.10-rc2的内核，真的是从2MB的
 页里分一页出来。
 
-所以，针对巨页mmap flags里还有宏可以指定从哪种大小的页里分巨页。man mmap下有：
+所以，针对巨页，mmap flags里还有宏可以指定从哪种大小的页里分巨页。man mmap下有：
 MAP_HUGE_2MB, MAP_HUGE_1GB，不过直接用这个宏会报没有定义，这个是因为gcc版本比较
 低，我们可以直接找见内核里定义的地方: linux/include/uapi/linux/mman.h
 ```

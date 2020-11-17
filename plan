@@ -57,7 +57,7 @@ dh
 vscode ##
 linux dbus
 
-memory tools
+memory tools		  xx
 tailq                     xx
 hugepage		  xx
 pin kernel page		  xx
@@ -65,5 +65,5 @@ bit map
 xarray
 open share lib problem
 share lib name
-github review code
+github review code	  xx
 dpdk mempool		  xx

@@ -44,10 +44,10 @@ kprobe
 tracepoint  1
 uprobe
 各种火焰图：cpu，memory, offcpu
-uml note   xx
+uml note                  xx
 rsa aead digest (aes-ccm, aes-gcm, cbc(aes128)-hmac(sha256)), sm2 256bit key, dh(公钥生成，和生成共享秘钥) x25519/x448
 getopt_long  1
-lock test
+lock test 		  xx 
 
 /proc/irq/irq_id/xxx
 /proc/pid/xxx/
@@ -67,3 +67,7 @@ open share lib problem
 share lib name
 github review code	  xx
 dpdk mempool		  xx
+openssl cmd
+如何写一个openssl engine
+如何用automake组织一个项目
+openssl 异步机制分析

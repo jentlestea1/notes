@@ -107,4 +107,14 @@ madvise也是对应系统调用的封装，可以从用户态传递一些内存�
 8. getrusage
 ------------
 getrusage是一个库函数，可以得到一个进程的相关资源的使用情况。其中包括内存使用
-的统计。
+的统计。比如其中，ru_minflt就是系统里初次分配内存这种缺页的次数，而ru_majflt
+是从swap分区里换入内存这样缺页的数目。
+
+9. proc下的关于内存的信息
+-------------------------
+/proc/slabinfo
+/proc/iomem
+/proc/meminfo
+/proc/vmstat
+/proc/zoneinfo
+/proc/vmallocinfo

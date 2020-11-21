@@ -11,7 +11,7 @@
 
 AES对称加解密：
 
-openssl enc -aes-128-cbc -in key -out key_encrypt -K 12345678901234567890 -iv 12345678
+openssl enc -aes-128-cbc -in data -out key_encrypt -K 12345678901234567890 -iv 12345678
 openssl enc -aes-128-cbc -in key_encrypt -out key_decrypt -K 12345678901234567890 -iv 12345678 -d
 
 公钥加密：
@@ -32,9 +32,12 @@ openssl rsautl -sign -in msg.txt -inkey prikey.pem -out signed.txt -engine uadk
 认证：
 openssl rsautl -verify -in signed.txt -inkey pubkey.pem -pubin -out verified.txt -engine uadk
 
-hash:
+哈希:
 openssl md5/sha1/sha256/sm3 -engine uadk data
 openssl md5/sha1/sha256/sm3 data
+
+如上，有-engine xxx的表示用执行的硬件加解密engine做任务，没有指定就是用openssl
+里提供的软件计算方法搞。
 
 2. openssl speed命令
 --------------------
@@ -53,4 +56,5 @@ openssl speed -engine uadk -elapsed -async_jobs 1 rsa2048
 
 openssl speed -engine uadk -elapsed -async_jobs 36 rsa2048
 
-Note: https://blog.csdn.net/henter/article/details/81903692
+如上，加了-async_jobs使用了openssl里的异步机制，如果engine里使用过了openssl里的
+异步机制，这里就会触发engine里的异步机制生效(fix me: ...)

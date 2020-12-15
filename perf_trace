@@ -81,4 +81,26 @@ iommu:dev_fault的事件，另外这个用力要使用block 8192才会观察到i
 
 观察到的log_sva里的记录可能是这样的：
 ```
+     0.000 :0/0 iommu:unmap:IOMMU: iova=0x00000000fdb67000 size=4096 unmapped_size=4096
+     0.030 :0/0 iommu:unmap:IOMMU: iova=0x00000000fdabe000 size=4096 unmapped_size=4096
+     0.396 test_hisi_sec/115486 iommu:map:IOMMU: iova=0x00000000fbfe9000 paddr=0x000000217e0c8000 size=4096
+     0.432 test_hisi_sec/115486 iommu:unmap:IOMMU: iova=0x00000000fbfe9000 size=4096 unmapped_size=4096
+     0.444 test_hisi_sec/115486 iommu:map:IOMMU: iova=0x00000000fbfe9000 paddr=0x000000217e0c8000 size=4096
+     0.465 test_hisi_sec/115486 iommu:unmap:IOMMU: iova=0x00000000fbfe9000 size=4096 unmapped_size=4096
+   671.920 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x000000002321c000 fetch=0x0000000000000000 pasid=1 group=138 flags=3 prot=1
+   671.961 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000023220000 fetch=0x0000000000000000 pasid=1 group=119 flags=3 prot=1
+   671.983 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000023230000 fetch=0x0000000000000000 pasid=1 group=158 flags=3 prot=1
+   672.003 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000023234000 fetch=0x0000000000000000 pasid=1 group=132 flags=3 prot=1
+   672.024 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x000000002323c000 fetch=0x0000000000000000 pasid=1 group=135 flags=3 prot=1
+   672.041 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000023232000 fetch=0x0000000000000000 pasid=1 group=120 flags=3 prot=2
+
+  [...]
+
+  1946.610 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000084d82000 fetch=0x0000000000000000 pasid=1 group=122 flags=3 prot=2
+  1946.636 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000084da6300 fetch=0x0000000000000000 pasid=1 group=88 flags=3 prot=2
+  1946.659 irq/33-arm-smm/873 iommu:dev_fault:IOMMU:0000:76:00.0 type=2 reason=0 addr=0x0000000084d8a180 fetch=0x0000000000000000 pasid=1 group=86 flags=3 prot=2
+  3031.527 :0/0 iommu:unmap:IOMMU: iova=0x00000000fdbe2000 size=4096 unmapped_size=4096
+  3031.550 :0/0 iommu:unmap:IOMMU: iova=0x00000000fdb68000 size=4096 unmapped_size=4096
+  3031.499 test_hisi_sec/115486 iommu:map:IOMMU: iova=0x00000000fbfe9000 paddr=0x000000217e0c8000 size=4096
+  3031.557 test_hisi_sec/115486 iommu:unmap:IOMMU: iova=0x00000000fbfe9000 size=4096 unmapped_size=4096
 ```

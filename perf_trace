@@ -3,7 +3,7 @@
 
 -v0.1 2020.11.25 Sherlock init
 
-使用perf list可以看到有trace point的软件定义的trace点。(fix me: 要开什么选项？)
+使用perf list可以看到有trace point的软件定义的trace点。(fix me: 要开什么内核选项)
 这些软件定义的trace point点要在代码里提前预埋，执行程序的时候可以用perf trace
 把需要的信息统计出来。
 
@@ -64,10 +64,21 @@ TRACE_EVENT(dev_fault,
 );
 ```
 在需要打点的地方插入一个trace_dev_fault(dev, evt)就好，其中dev是TP_PROTO里定义的
-struct device *dev, evt是里面定义的struct iommu *evt。
+struct device *dev, evt是里面定义的struct iommu_fault *evt。
 
+TP_STRUCT__entry定义记录结构里各个域段的定义。TP_fast_assign定义域段记录的值。
+TP_printk定义打印的方式。
 
-sudo ./perf trace -o log_sva -a -e iommu:* numactl --cpubind 1 --membind 1  test_hisi_sec --perf --async --pktlen 1024 --block 8192 --blknum 100000 --times 1000000 --multi 1 --ctxnum 1
+以UADK里一个测试用力为例，我们看看怎么用perf trace收集IO page fault的信息。具体
+的运行命令如下:
+```
+sudo ./perf trace -o log_sva -a -e iommu:* numactl --cpubind 1 --membind 1  \
+test_hisi_sec --perf --async --pktlen 1024 --block 8192 --blknum 100000 \
+--times 1000000 --multi 1 --ctxnum 1
+```
+-o后面加需要存放log的文件。注意, 需要sudo权限，需要-a，不然无法看到
+iommu:dev_fault的事件，另外这个用力要使用block 8192才会观察到iommu:dev_fault事件
 
-需要sudo权限，需要-a，不然无法看到iommu:dev_fault的事件，使用block 8192才会观察到
-iommu:dev_fault事件
+观察到的log_sva里的记录可能是这样的：
+```
+```

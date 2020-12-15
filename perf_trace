@@ -1,0 +1,73 @@
+使用perf trace跟踪IO缺页
+========================
+
+-v0.1 2020.11.25 Sherlock init
+
+使用perf list可以看到有trace point的软件定义的trace点。(fix me: 要开什么选项？)
+这些软件定义的trace point点要在代码里提前预埋，执行程序的时候可以用perf trace
+把需要的信息统计出来。
+
+我们拿Linux内核里IOMMU统计IO缺页的event做例子看看。这个event的定义在:
+include/trace/events/iommu.h里：
+```
+TRACE_EVENT(dev_fault,
+
+	TP_PROTO(struct device *dev,  struct iommu_fault *evt),
+
+	TP_ARGS(dev, evt),
+
+	TP_STRUCT__entry(
+		__string(device, dev_name(dev))
+		__field(int, type)
+		__field(int, reason)
+		__field(u64, addr)
+		__field(u64, fetch_addr)
+		__field(u32, pasid)
+		__field(u32, grpid)
+		__field(u32, flags)
+		__field(u32, prot)
+	),
+
+	TP_fast_assign(
+		__assign_str(device, dev_name(dev));
+		__entry->type = evt->type;
+		if (evt->type == IOMMU_FAULT_DMA_UNRECOV) {
+			__entry->reason		= evt->event.reason;
+			__entry->flags		= evt->event.flags;
+			__entry->pasid		= evt->event.pasid;
+			__entry->grpid		= 0;
+			__entry->prot		= evt->event.perm;
+			__entry->addr		= evt->event.addr;
+			__entry->fetch_addr	= evt->event.fetch_addr;
+		} else {
+			__entry->reason		= 0;
+			__entry->flags		= evt->prm.flags;
+			__entry->pasid		= evt->prm.pasid;
+			__entry->grpid		= evt->prm.grpid;
+			__entry->prot		= evt->prm.perm;
+			__entry->addr		= evt->prm.addr;
+			__entry->fetch_addr	= 0;
+		}
+	),
+
+	TP_printk("IOMMU:%s type=%d reason=%d addr=0x%016llx fetch=0x%016llx pasid=%d group=%d flags=%x prot=%d",
+		__get_str(device),
+		__entry->type,
+		__entry->reason,
+		__entry->addr,
+		__entry->fetch_addr,
+		__entry->pasid,
+		__entry->grpid,
+		__entry->flags,
+		__entry->prot
+	)
+);
+```
+在需要打点的地方插入一个trace_dev_fault(dev, evt)就好，其中dev是TP_PROTO里定义的
+struct device *dev, evt是里面定义的struct iommu *evt。
+
+
+sudo ./perf trace -o log_sva -a -e iommu:* numactl --cpubind 1 --membind 1  test_hisi_sec --perf --async --pktlen 1024 --block 8192 --blknum 100000 --times 1000000 --multi 1 --ctxnum 1
+
+需要sudo权限，需要-a，不然无法看到iommu:dev_fault的事件，使用block 8192才会观察到
+iommu:dev_fault事件

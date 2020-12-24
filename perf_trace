@@ -2,6 +2,7 @@
 ========================
 
 -v0.1 2020.11.25 Sherlock init
+-v0.2 2020.12.24 Sherlock add ftrace usage
 
 使用perf list可以看到有trace point的软件定义的trace点。(fix me: 要开什么内核选项)
 这些软件定义的trace point点要在代码里提前预埋，执行程序的时候可以用perf trace
@@ -104,3 +105,10 @@ iommu:dev_fault的事件，另外这个用力要使用block 8192才会观察到i
   3031.499 test_hisi_sec/115486 iommu:map:IOMMU: iova=0x00000000fbfe9000 paddr=0x000000217e0c8000 size=4096
   3031.557 test_hisi_sec/115486 iommu:unmap:IOMMU: iova=0x00000000fbfe9000 size=4096 unmapped_size=4096
 ```
+
+除了用perf trace跟踪，也可以用ftrace跟踪。这需要ftrace的目录下(一般在/sys/kernel/debug/tracing)
+的event里使能对应的trace point点，这样再去trace就可以看到输出的打印。
+
+也可以在需要跟踪的地方简单的加一个trace_printk()的打印，把对应的模块写到
+set_ftrace_filter: echo ':mod:xxx_module_name' > set_ftrace_filter。然后再去
+trace，也可以看到输出的打印。

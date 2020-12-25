@@ -1,0 +1,37 @@
+SMMU TLBI
+=========
+
+-v0.1 2020.12.25 Sherlock init
+
+本文分析SMMU-v3 tlbi相关的硬件语义和linux相关驱动代码的实现。
+
+1. SMMU E2H支持
+---------------
+ SMMU SVA支持的patchset里有一个补丁：iommu/arm-smmu-v3: Add support for VHE
+ 这个补丁的基本逻辑是, CPU支持VHE，且内核支持时，host kernel工作在EL2，在SVA
+ 下，因为需要做DVM tlbi广播，且tlbi广播在同一个EL里生效，所以需要SMMU这边的TLB
+ 也打上EL2的标记。这个是通过设置设备对应的STE里的STRW生效的，这个配置对SMMU tlb
+ 影响是全局的。
+
+ 这里面还有三个逻辑：
+
+ 1. 要使得DVM tlbi的广播生效，还要设置下SMMU CR2.E2H寄存器(使得ASID标记生效)。
+    这个补丁里配置了E2H。
+
+ 2. 因为STRW的配置是STE全局的，SMMU管理的内核地址的TLB也打上了EL2的标记，这就
+    需要把原来对内核地址的tlbi命令从TLBI_NH改成TLBI_VA。
+
+ 3. 原来invalidate内核地址的tlbi命令又可以分为TLBI_VA和TLBI_ASID，所以，上面
+    一步要把原来的TLBI_NH_VA/TLBI_NH_ASID都改成TLBI_EL2_VA/TLBI_EL2_ASID。
+
+2. SMMU tlbi相关命令
+--------------------
+
+ SMMU spec 4.4章节介绍了tlbi相关的command。
+
+3. linux SMMU驱动里的实现
+-------------------------
+
+
+
+

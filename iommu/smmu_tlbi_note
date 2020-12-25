@@ -7,6 +7,7 @@ SMMU TLBI
 
 1. SMMU E2H支持
 ---------------
+
  SMMU SVA支持的patchset里有一个补丁：iommu/arm-smmu-v3: Add support for VHE
  这个补丁的基本逻辑是, CPU支持VHE，且内核支持时，host kernel工作在EL2，在SVA
  下，因为需要做DVM tlbi广播，且tlbi广播在同一个EL里生效，所以需要SMMU这边的TLB
@@ -22,15 +23,37 @@ SMMU TLBI
     需要把原来对内核地址的tlbi命令从TLBI_NH改成TLBI_VA。
 
  3. 原来invalidate内核地址的tlbi命令又可以分为TLBI_VA和TLBI_ASID，所以，上面
-    一步要把原来的TLBI_NH_VA/TLBI_NH_ASID都改成TLBI_EL2_VA/TLBI_EL2_ASID。
+    一步还要把原来的TLBI_NH_VA/TLBI_NH_ASID都改成TLBI_EL2_VA/TLBI_EL2_ASID。
+
+ 这个补丁做了上述的修改，使得SVA和内核地址的tlbi在VHE使能的时候都可以正常使用。
 
 2. SMMU tlbi相关命令
 --------------------
 
- SMMU spec 4.4章节介绍了tlbi相关的command。
+ SMMU spec 4.4章节介绍了tlbi相关的command, 上面提到的相关tlbi命令在这一章节中
+ 都有详细的描述。EL2和NH的标记在上面已经介绍。关于VA和ASID标记的区别在于做tlb
+ 无效化的时候作用的范围是不一样的。简单的讲带ASID的tlbi会无效化对应asid的tlb，
+ 理论上讲，SVA需要用这个，但是现在SVA用的是DVM，还没有用到带ASID的tlbi，在实际
+ 分析的时候，还看到no-strict时使用的是带ASID的tlbi，这个下面结合代码来分析。
+ 直接带VA的tlbi可以对一段地址做tlb无效化，相关的command域段里的值有: scale,
+ num, asid, address, tg, ttl, leaf。当SMMU硬件支持tlbi by range(IDR3_RIL = 1)时，
+ 还可以用带VA的tlbi实现tlbi by range.
 
 3. linux SMMU驱动里的实现
 -------------------------
+
+ 因为SVA没有用tlbi，所以我们主要分析内核dma内存中的tlbi就好了。
+```
+  iommu_dma_free
+    +-> __iommu_dma_unmap
+```
+ 
+
+ 带ASID的tlbi调用路径:
+
+
+ 带VA的tlbi调用路径:
+
 
 
 

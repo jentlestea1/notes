@@ -44,17 +44,42 @@ SMMU TLBI
 
  因为SVA没有用tlbi，所以我们主要分析内核dma内存中的tlbi就好了。
 ```
+  /* drivers/iommu/dma-iommu.c */
   iommu_dma_free
     +-> __iommu_dma_unmap
+      /* 用来init iotlb_gather，为以后做tlbi by range做准备 */
+      +-> iommu_iotlb_gather_init
+      +-> iommu_unmap_fast
+        ...
+	  +-> arm_smmu_unmap
+	    /* drivers/iommu/io-pgtable-arm.c, 这一步跳的有点大:) */
+	    +-> arm_lpae_unmap 
+	      +-> __arm_lpae_unmap
+	        +-> io_pgtable_tlb_add_page
+		  /* drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c */
+		  +-> arm_smmu_tlb_inv_page_nosync 
+		    /*
+		     * 不断的收集tlbi的range，遇到不相连的range就做tlbi
+		     */
+		    +-> iommu_iotlb_gather_add_page
+		      +-> iommu_tlb_sync
+		        /* arm-smmu-v3.c */
+		        +-> arm_smmu_iotlb_sync
+			  /* 使用VA tlbi，range invalidate的逻辑也在这里 */
+			  +-> arm_smmu_tlb_inv_range
+
+      +-> iommu_tlb_sync (如果没有fq_domain，即使用strict mode)
+        +-> arm_smmu_iotlb_sync
+      ...
 ```
- 
-
- 带ASID的tlbi调用路径:
-
-
- 带VA的tlbi调用路径:
-
-
-
-
-
+ 使用no-strict模式会起一个定时器, 在队列满或者定时器到时做tlbi。
+```
+ /* drivers/iommu/iova.c */
+ iova_domain_flush
+   /* drivers/iommu/dma-iommu.c */
+   +-> iommu_dma_flush_iotlb_all
+     /* arm-smmu-v3.c */
+     +-> arm_smmu_flush_iotlb_all
+       /* 这个函数里会下发带ASID的tlb */
+       +-> arm_smmu_tlb_inv_context
+```

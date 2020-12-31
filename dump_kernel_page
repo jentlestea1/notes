@@ -1,0 +1,9 @@
+Dump Linux kernel page table
+============================
+
+-v0.1 2020.12.31 Sherlock init
+
+
+1. 打开内核编译选项：CONFIG_PTDUMP_CORE, CONFIG_PTDUMP_DEBUGFS
+
+2. 在/sys/kernel/debug/kernel_page_tables下可以dump kernel page table

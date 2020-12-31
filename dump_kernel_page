@@ -7,3 +7,5 @@ Dump Linux kernel page table
 1. 打开内核编译选项：CONFIG_PTDUMP_CORE, CONFIG_PTDUMP_DEBUGFS
 
 2. 在/sys/kernel/debug/kernel_page_tables下可以dump kernel page table
+
+3. dump 进程页表：linux/Documentation/vm/pagemap.txt (todo)

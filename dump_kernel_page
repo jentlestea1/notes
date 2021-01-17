@@ -1,11 +1,27 @@
-Dump Linux kernel page table
-============================
+Dump Linux kernel and process page table
+========================================
 
 -v0.1 2020.12.31 Sherlock init
 
+1. dump 内核页表
 
-1. 打开内核编译选项：CONFIG_PTDUMP_CORE, CONFIG_PTDUMP_DEBUGFS
+   1. 打开内核编译选项：CONFIG_PTDUMP_CORE, CONFIG_PTDUMP_DEBUGFS, 编译内核。
 
-2. 在/sys/kernel/debug/kernel_page_tables下可以dump kernel page table
+   2. 在/sys/kernel/debug/kernel_page_tables下可以dump kernel page table。
 
-3. dump 进程页表：linux/Documentation/vm/pagemap.txt (todo)
+2. dump 进程页表
+   
+   linux系统上，通过对/proc/<pid>/pagemap的操作可以dump进程的页表信息。
+   这个文件的介绍可以参考linux/Documentation/vm/pagemap.txt。直接cat
+   这个文件的无法得到信息，我们需要按照上面文件中描述的格式写代码解析。
+   内核代码在tools/vm/page-types.c提供了解析的工具。可以使用:
+   make -C tools/vm 编译得到page-types这个工具。使用的效果类似:
+```
+sudo ./page-types --pid 91228
+             flags	page-count       MB  symbolic-flags			long-symbolic-flags
+0x0000000000000800	         1        0  ___________M________________________________	mmap
+0x000000000000086c	       706        2  __RU_lA____M________________________________	referenced,uptodate,lru,active,mmap
+0x0000000000005828	       520        2  ___U_l_____Ma_b_____________________________	uptodate,lru,mmap,anonymous,swapbacked
+0x000000000000586c	         1        0  __RU_lA____Ma_b_____________________________	referenced,uptodate,lru,active,mmap,anonymous,swapbacked
+             total	      1228        4
+```

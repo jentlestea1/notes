@@ -1,0 +1,42 @@
+ARM SMMUv3 IO page table
+========================
+
+-v0.1 2021.1.27 Sherlock init
+
+
+1. 页表以及相关配置的初始化流程
+```
+arm_smmu_attach_dev
+  +-> arm_smmu_domain_finalise
+        /*
+	 * 目的是创建smmu_domain里的pgtbl_ops, 这个结构的原型是struct io_pgtable_ops
+	 * struct io_pgtable_ops
+	 *   +-> map   
+	 *   +-> unmap
+	 *   +-> iova_to_phys
+	 */
+    +-> alloc_io_pgtable_ops
+        /*
+         * 以64bit s1为例子, 如下函数初始化页表的pgd, 并且初始化页表map/unmap的
+	 * 操作函数
+	 */
+      +-> arm_64_lpae_alloc_pgtable_s1
+
+            /* 主要创建页表操作函数 */
+        +-> arm_lpae_alloc_pgtable
+	  +-> map = arm_lpae_map
+	  +-> unmap = arm_lpae_unmap
+	  +-> iova_to_phys = arm_lpae_iova_to_phys
+
+	    /* 创建pgd */
+	+-> __arm_lpae_alloc_pages
+
+	    /* 得到页表基地址 */
+	+-> cfg->arm_lpae_s1_cfg.ttbr = virt_to_phys(data->pgd);
+	/* 得到的io_pgtable_ops存放到smmu_domain中 */
+    +-> smmu_domain->pgtbl_ops
+```
+
+2. map流程分析
+```
+```

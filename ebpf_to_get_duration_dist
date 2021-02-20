@@ -59,14 +59,32 @@
 	sudo apt-get install snap
 	sudo snap install bcc
 ```
- 这个
+ 如上会把snap管理下的bcc包安装到/snap/*下. ls -al /snap
+```
+total 28
+drwxr-xr-x  6 root root 4096 2月  20 02:34 .
+drwxr-xr-x 22 root root 4096 10月  1 15:48 ..
+drwxr-xr-x  3 root root 4096 2月  20 02:34 bcc
+drwxr-xr-x  2 root root 4096 2月  20 05:16 bin
+drwxr-xr-x  3 root root 4096 2月  20 02:33 core18
+-r--r--r--  1 root root  548 10月 17  2019 README
+drwxr-xr-x  3 root root 4096 2月  20 02:32 snapd
+```
 
+为python增加搜索库的路径，可以看到snap管理的bcc python库都在snap自己的路劲下。
 ```
 PYTHONPATH="/snap/bcc/146/usr/lib/python3/dist-packages:{$PYTHONPATH}"
 export PYTHONPATH
 
 LD_LIBRARY_PATH="/snap/bcc/146/usr/lib/aarch64-linux-gnu/:{$LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH
+```
+
+注意，这里编译bcc代码的时候，会使用到内核头文件。本文测试的尝试了各种内核头文件
+导出的方式都还是一直有内核头文件找不到。索性把查找头文件的目录又重新软连接到
+使用内核的源码路劲上。为了简单起见，本文的测试使用了本地编译内核的方式：
+```
+	ln -s <your kernel source> /lib/modules/<your_kernel_magic>/build
 ```
 
 3. 代码示例
@@ -139,7 +157,7 @@ index e9b648407102..4d96bfd20726 100644
 
 ```
 
-用户态python脚本:
+用户态python脚本, ebpf_smmu_iopf.py
 ```
 #!/usr/bin/python3
 #
@@ -225,3 +243,37 @@ while (1):
 
 4. 运行效果
 -----------
+```
+ sudo ./ebpf_smmu_iopf.py
+
+ 另一个窗口运行：
+ sudo zip_perf_test -b 8192 -s 819200000
+```
+得到如下的iopf时延的分布图:
+```
+[...]
+```
+
+在过程中测试eBPF的环境是否搭建ok，也可以跑下/snap/bin自带的程序，比如跑bcc.cpudist
+我们得到了这样的分布图：
+```
+Tracing on-CPU time... Hit Ctrl-C to end.
+
+     usecs               : count     distribution
+         0 -> 1          : 193      |*************************               |
+         2 -> 3          : 49       |******                                  |
+         4 -> 7          : 35       |****                                    |
+         8 -> 15         : 41       |*****                                   |
+        16 -> 31         : 37       |****                                    |
+        32 -> 63         : 116      |***************                         |
+        64 -> 127        : 14       |*                                       |
+       128 -> 255        : 2        |                                        |
+       256 -> 511        : 0        |                                        |
+       512 -> 1023       : 3        |                                        |
+      1024 -> 2047       : 12       |*                                       |
+      2048 -> 4095       : 61       |********                                |
+      4096 -> 8191       : 96       |************                            |
+      8192 -> 16383      : 97       |************                            |
+     16384 -> 32767      : 162      |*********************                   |
+     32768 -> 65535      : 301      |****************************************|
+```

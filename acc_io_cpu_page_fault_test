@@ -58,21 +58,30 @@ Linux ubuntu 5.11.0-rc4-g0fdcd6aaf7c2-dirty #25 SMP PREEMPT Tue Feb 23 11:04:29 
 2. 硬件加速 + 关THP + 绑cpu/mem + 不pre-fault
 ---------------------------------------------
 
-结论：开THP会触发内核做collapse huge page, 虽然有少量长延时IOPF, 但是，短延时
-      IOPF大大减少，加速器总性能提升。这样看THP是SVA性能提升的一个方向。
+结论1：开THP会触发内核做collapse huge page, 虽然有少量长延时IOPF, 但是，短延时
+       IOPF大大减少，加速器总性能提升。这样看THP是SVA性能提升的一个方向。
 
-3. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
+
+3. 硬件加速 + 关THP + 不绑cpu/mem + pre-fault
 ---------------------------------------------
+
+结论2: 提前用cpu触发page fault, numa balancing也会概率性触发IOPF。
+
 
 4. 硬件加速 + 开THP + 绑cpu/mem + pre-fault
 -------------------------------------------
 
+结论3: 提前用cpu触发page fault, 绑cpu/mem, 没有iopf。(也可能是测试次数太少)
+
+
 5. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
 -----------------------------------------------
 
-6. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
+结论4: 即使使用硬件加速，由于THP的影响，CPU page fault也会出现大延迟。
+
+
+6. CPU计算压缩 + 开THP + 绑cpu/mem + 不pre-fault
 -----------------------------------------------
 
-
-
-
+结论5: CPU计算zlib性能非常差。缺页时延集中在4us以下。(todo: 需要多次测试)
+       (CPU没有THP触发的缺页?)

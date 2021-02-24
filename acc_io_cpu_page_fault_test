@@ -1,0 +1,78 @@
+加速器IO/CPU page fault时延测试
+===============================
+
+-v0.1 2021.2.24 Sherlock init
+
+0. 测试环境:
+------------
+
+1. numactl -H
+
+available: 4 nodes (0-3)
+node 0 cpus: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+node 0 size: 0 MB
+node 0 free: 0 MB
+node 1 cpus: 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63
+node 1 size: 31908 MB
+node 1 free: 30405 MB
+node 2 cpus: 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95
+node 2 size: 0 MB
+node 2 free: 0 MB
+node 3 cpus: 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
+node 3 size: 32083 MB
+node 3 free: 31433 MB
+node distances:
+node   0   1   2   3 
+  0:  10  12  20  22 
+  1:  12  10  22  24 
+  2:  20  22  10  12 
+  3:  22  24  12  10 
+
+2. dmidecode | grep BIOS
+
+Getting SMBIOS data from sysfs.
+SMBIOS 3.1.1 present.
+# SMBIOS implementations newer than version 3.0 are not
+BIOS Information
+	Version: TA BIOS 2280-A CS V2.B220.01
+		BIOS is upgradeable
+		BIOS shadowing is allowed
+		BIOS boot specification is supported
+	BIOS Revision: 0.0
+BIOS Language Information
+
+3. uname -a
+
+Linux ubuntu 5.11.0-rc4-g0fdcd6aaf7c2-dirty #25 SMP PREEMPT Tue Feb 23 11:04:29 UTC 2021 aarch64 aarch64 aarch64 GNU/Linux
+
+4. 需要在内核加上如下补丁：
+
+5. 用户态使用如下ebpf脚本:
+
+6. 使用zip设备做测试, 做1000000个8K大小包的压缩。
+   
+
+1. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
+---------------------------------------------
+
+2. 硬件加速 + 关THP + 绑cpu/mem + 不pre-fault
+---------------------------------------------
+
+结论：开THP会触发内核做collapse huge page, 虽然有少量长延时IOPF, 但是，短延时
+      IOPF大大减少，加速器总性能提升。这样看THP是SVA性能提升的一个方向。
+
+3. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
+---------------------------------------------
+
+4. 硬件加速 + 开THP + 绑cpu/mem + pre-fault
+-------------------------------------------
+
+5. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
+-----------------------------------------------
+
+6. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault
+-----------------------------------------------
+
+
+
+

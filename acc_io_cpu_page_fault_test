@@ -2,6 +2,7 @@
 ===============================
 
 -v0.1 2021.2.24 Sherlock init
+-v0.2 2021.2.28 Sherlock 增加有内存背景噪声的测试
 
 0. 测试环境:
 ------------
@@ -46,8 +47,245 @@ BIOS Language Information
 Linux ubuntu 5.11.0-rc4-g0fdcd6aaf7c2-dirty #25 SMP PREEMPT Tue Feb 23 11:04:29 UTC 2021 aarch64 aarch64 aarch64 GNU/Linux
 
 4. 需要在内核加上如下补丁：
+https://github.com/Linaro/linux-kernel-uadk uacce-devel-5.11
+```
+diff --git a/arch/arm64/mm/fault.c b/arch/arm64/mm/fault.c
+index 3c40da4..ac07431 100644
+--- a/arch/arm64/mm/fault.c
++++ b/arch/arm64/mm/fault.c
+@@ -41,6 +41,8 @@
+ #include <asm/tlbflush.h>
+ #include <asm/traps.h>
+ 
++#include <trace/events/smmu.h>
++
+ struct fault_info {
+ 	int	(*fn)(unsigned long far, unsigned int esr,
+ 		      struct pt_regs *regs);
+@@ -655,9 +657,14 @@ static int __kprobes do_translation_fault(unsigned long far,
+ 					  struct pt_regs *regs)
+ {
+ 	unsigned long addr = untagged_addr(far);
++	int ret;
+ 
+-	if (is_ttbr0_addr(addr))
+-		return do_page_fault(far, esr, regs);
++	if (is_ttbr0_addr(addr)) {
++		trace_cpu_fault_entry(far);
++		ret = do_page_fault(far, esr, regs);
++		trace_cpu_fault_exit(far);
++		return ret;
++	}
+ 
+ 	do_bad_area(far, esr, regs);
+ 	return 0;
+diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+index 8d29aa1..d38dd13 100644
+--- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
++++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+@@ -32,6 +32,8 @@
+ 
+ #include <linux/amba/bus.h>
+ 
++#include <trace/events/smmu.h>
++
+ #include "arm-smmu-v3.h"
+ #include "../../iommu-sva-lib.h"
+ 
+@@ -945,6 +947,8 @@ static int arm_smmu_page_response(struct device *dev,
+ 	 * forget.
+ 	 */
+ 
++	trace_io_fault_exit(dev, resp->pasid, evt->fault.prm.addr);
++
+ 	return 0;
+ }
+ 
+@@ -1474,6 +1478,9 @@ static int arm_smmu_handle_evt(struct arm_smmu_device *smmu, u64 *evt)
+ 	struct iommu_fault_event fault_evt = { };
+ 	struct iommu_fault *flt = &fault_evt.fault;
+ 
++	trace_io_fault_entry(smmu->dev, FIELD_GET(EVTQ_0_SSID, evt[0]),
++			     FIELD_GET(EVTQ_2_ADDR, evt[2]));
++
+ 	/* Stage-2 is always pinned at the moment */
+ 	if (evt[1] & EVTQ_1_S2)
+ 		return -EFAULT;
+diff --git a/include/trace/events/smmu.h b/include/trace/events/smmu.h
+index e9b6484..e24101a 100644
+--- a/include/trace/events/smmu.h
++++ b/include/trace/events/smmu.h
+@@ -82,6 +82,50 @@ DEFINE_EVENT(smmu_mn, smmu_mn_free, TP_PROTO(unsigned int pasid), TP_ARGS(pasid)
+ DEFINE_EVENT(smmu_mn, smmu_mn_get, TP_PROTO(unsigned int pasid), TP_ARGS(pasid));
+ DEFINE_EVENT(smmu_mn, smmu_mn_put, TP_PROTO(unsigned int pasid), TP_ARGS(pasid));
+ 
++DECLARE_EVENT_CLASS(smmu_io_fault_class,
++	TP_PROTO(struct device *dev, unsigned int pasid, u64 va),
++	TP_ARGS(dev, pasid, va),
++
++	TP_STRUCT__entry(
++		__string(dev, dev_name(dev))
++		__field(int, pasid)
++		__field(u64, va)
++	),
++	TP_fast_assign(
++		__assign_str(dev, dev_name(dev));
++		__entry->pasid = pasid;
++		__entry->va = va;
++	),
++	TP_printk("dev=%s pasid=%d, va=%llx", __get_str(dev), __entry->pasid,
++		   __entry->va)
++);
++
++#define DEFINE_IO_FAULT_EVENT(name)       \
++DEFINE_EVENT(smmu_io_fault_class, name,        \
++	TP_PROTO(struct device *dev, unsigned int pasid, u64 va), \
++	TP_ARGS(dev, pasid, va))
++
++DEFINE_IO_FAULT_EVENT(io_fault_entry);
++DEFINE_IO_FAULT_EVENT(io_fault_exit);
++
++DECLARE_EVENT_CLASS(smmu_cpu_fault_class,
++	TP_PROTO(u64 va),
++	TP_ARGS(va),
++
++	TP_STRUCT__entry(
++		__field(u64, va)
++	),
++	TP_fast_assign(
++		__entry->va = va;
++	),
++	TP_printk("va=%llx", __entry->va)
++);
++
++#define DEFINE_CPU_FAULT_EVENT(name)       \
++DEFINE_EVENT(smmu_cpu_fault_class, name, TP_PROTO(u64 va), TP_ARGS(va))
++
++DEFINE_CPU_FAULT_EVENT(cpu_fault_entry);
++DEFINE_CPU_FAULT_EVENT(cpu_fault_exit);
+ 
+ #endif /* _TRACE_SMMU_H */
+```
 
 5. 用户态使用如下ebpf脚本:
+```
+#!/usr/bin/python3
+#
+from __future__ import print_function
+from bcc import BPF
+from ctypes import c_ushort, c_int, c_ulonglong
+from time import sleep
+from sys import argv
+
+def usage():
+        print("USAGE: %s [interval [count]]" % argv[0])
+        exit()
+
+# arguments
+interval = 500
+count = -1
+if len(argv) > 1:
+        try:
+                interval = int(argv[1])
+                if interval == 0:
+                        raise
+                if len(argv) > 2:
+                        count = int(argv[2])
+        except: # also catches -h, --help
+                usage()
+
+# load BPF program
+b = BPF(text="""
+#include <uapi/linux/ptrace.h>
+
+BPF_HASH(start, u64);
+BPF_HISTOGRAM(dist);
+
+BPF_HASH(cpu_start, u64);
+BPF_HISTOGRAM(cpu_dist);
+
+TRACEPOINT_PROBE(smmu, io_fault_entry)
+{
+        u64 ts;
+	u64 va = args->va;
+
+	ts = bpf_ktime_get_ns();
+        start.update(&va, &ts);
+
+        return 0;
+}
+
+TRACEPOINT_PROBE(smmu, io_fault_exit)
+{
+        u64 *tsp, delta;
+	u64 va = args->va;
+
+        tsp = start.lookup(&va);
+
+        if (tsp != 0) {
+                delta = bpf_ktime_get_ns() - *tsp;
+                dist.increment(bpf_log2l(delta));
+                start.delete(&va);
+        }
+
+        return 0;
+}
+
+TRACEPOINT_PROBE(smmu, cpu_fault_entry)
+{
+        u64 ts;
+	u64 va = args->va;
+
+	ts = bpf_ktime_get_ns();
+        cpu_start.update(&va, &ts);
+
+        return 0;
+}
+
+TRACEPOINT_PROBE(smmu, cpu_fault_exit)
+{
+        u64 *tsp, delta;
+	u64 va = args->va;
+
+        tsp = cpu_start.lookup(&va);
+
+        if (tsp != 0) {
+                delta = bpf_ktime_get_ns() - *tsp;
+                cpu_dist.increment(bpf_log2l(delta));
+                cpu_start.delete(&va);
+        }
+
+        return 0;
+}
+""")
+
+# header
+print("Tracing... Hit Ctrl-C to end.")
+
+# output
+loop = 0
+do_exit = 0
+while (1):
+        if count > 0:
+                loop += 1
+                if loop > count:
+                        exit()
+        try:
+                sleep(interval)
+        except KeyboardInterrupt:
+                pass; do_exit = 1
+
+        print("io pf duration dist:")
+        b["dist"].print_log2_hist("nsecs")
+        b["dist"].clear()
+
+        print("cpu pf duration dist:")
+        b["cpu_dist"].print_log2_hist("nsecs")
+        b["cpu_dist"].clear()
+
+        if do_exit:
+                exit()
+```
 
 6. 使用zip设备做测试, 做1000000个8K大小包的压缩。
    开THP是：echo always > /sys/kernel/mm/transparent_hugepage/enable
@@ -502,3 +740,93 @@ cpu pf duration dist:
 Compress bz=8192 nb=1×1000000, speed=1963.7 MB/s (±0.0% N=1) overall=198.7 MB/s (±0.0%)
 
 结论：TLB miss对于我们这样的顺序的内存模型影响不大。
+
+
+8. 硬件加速 + 开THP + 绑cpu/mem + 不pre-fault + 其他内存背景噪声
+----------------------------------------------------------------
+
+内存噪声起10个这样的进程：
+```
+#include <malloc.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MEM_SIZE	(1024 * 1024 * 1024)
+#define SLEEP_TIME	1
+
+int main()
+{
+	void *p;
+	unsigned long i;
+
+	for (i = 0; i < 100000000; i++) {
+		p = malloc(MEM_SIZE);
+		if (!p)
+			exit(1);
+
+		memset(p, 3, MEM_SIZE);
+
+		free(p);
+	}
+
+	return 0;
+}
+```
+
+sudo numactl --cpubind=1 --membind=1 zip_sva_perf -b 8192 -s 8192000000
+
+Tracing... Hit Ctrl-C to end.
+io pf duration dist:
+     nsecs               : count     distribution
+         0 -> 1          : 0        |                                        |
+         2 -> 3          : 0        |                                        |
+         4 -> 7          : 0        |                                        |
+         8 -> 15         : 0        |                                        |
+        16 -> 31         : 0        |                                        |
+        32 -> 63         : 0        |                                        |
+        64 -> 127        : 0        |                                        |
+       128 -> 255        : 0        |                                        |
+       256 -> 511        : 0        |                                        |
+       512 -> 1023       : 0        |                                        |
+      1024 -> 2047       : 0        |                                        |
+      2048 -> 4095       : 0        |                                        |
+      4096 -> 8191       : 48       |                                        |
+      8192 -> 16383      : 163      |                                        |
+     16384 -> 32767      : 13       |                                        |
+     32768 -> 65535      : 4        |                                        |
+     65536 -> 131071     : 0        |                                        |
+    131072 -> 262143     : 1        |                                        |
+    262144 -> 524287     : 0        |                                        |
+    524288 -> 1048575    : 7076     |****************************************|
+   1048576 -> 2097151    : 735      |****                                    |
+cpu pf duration dist:
+     nsecs               : count     distribution
+         0 -> 1          : 0        |                                        |
+         2 -> 3          : 0        |                                        |
+         4 -> 7          : 0        |                                        |
+         8 -> 15         : 0        |                                        |
+        16 -> 31         : 0        |                                        |
+        32 -> 63         : 0        |                                        |
+        64 -> 127        : 0        |                                        |
+       128 -> 255        : 0        |                                        |
+       256 -> 511        : 0        |                                        |
+       512 -> 1023       : 57       |                                        |
+      1024 -> 2047       : 5381086  |****************                        |
+      2048 -> 4095       : 13206232 |****************************************|
+      4096 -> 8191       : 3112186  |*********                               |
+      8192 -> 16383      : 475167   |*                                       |
+     16384 -> 32767      : 98426    |                                        |
+     32768 -> 65535      : 18952    |                                        |
+     65536 -> 131071     : 1096     |                                        |
+    131072 -> 262143     : 382      |                                        |
+    262144 -> 524287     : 6027     |                                        |
+    524288 -> 1048575    : 345987   |*                                       |
+   1048576 -> 2097151    : 1102     |                                        |
+   2097152 -> 4194303    : 2        |                                        |
+
+Compress bz=8192 nb=1×1000000, speed=644.1 MB/s (±0.0% N=1) overall=185.4 MB/s (±0.0%)
+
+结论：有背景噪声的场景下，开THP，关numa balancing，性能下降较多。iopf的统计特征
+      和没有背景噪声的时候基本一样。cpu fault很多，但是目前的统计把背景噪声的
+      cpu fault也统计进来。(todo: 可否只统计一个进程的cpu fault?)

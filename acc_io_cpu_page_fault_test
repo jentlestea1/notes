@@ -3,7 +3,6 @@
 
 -v0.1 2021.2.24 Sherlock init
 -v0.2 2021.2.28 Sherlock 增加有内存背景噪声的测试
-
 0. 测试环境:
 ------------
 
@@ -830,3 +829,84 @@ Compress bz=8192 nb=1×1000000, speed=644.1 MB/s (±0.0% N=1) overall=185.4 MB/s
 结论：有背景噪声的场景下，开THP，关numa balancing，性能下降较多。iopf的统计特征
       和没有背景噪声的时候基本一样。cpu fault很多，但是目前的统计把背景噪声的
       cpu fault也统计进来。(todo: 可否只统计一个进程的cpu fault?)
+
+      这个现象目前无法解释?!
+
+
+8. 硬件加速 + 关always的THP + 绑cpu/mem + pre-fault + 其他内存背景噪声使用madvise THP
+-------------------------------------------------------------------------------------
+
+内存噪声起6个这样的进程：(起10个会每次都oom kill掉zip测试进程)
+```
+#include <malloc.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+
+#define MEM_SIZE	(1024 * 1024 * 1024)
+#define SLEEP_TIME	1
+
+int main()
+{
+	unsigned long i;
+	void *p;
+	int ret;
+
+	for (i = 0; i < 100000000; i++) {
+		p = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE |
+			 MAP_ANONYMOUS, -1, 0);
+		if (p == MAP_FAILED) {
+			printf("---> error 1\n");
+			exit(1);
+		}
+
+		ret = madvise(p, MEM_SIZE, MADV_HUGEPAGE);
+		if (ret) {
+			printf("---> error 2\n");
+			exit(1);
+		}
+
+		memset(p, 3, MEM_SIZE);
+
+		munmap(p, MEM_SIZE);
+	}
+
+	return 0;
+}
+```
+sudo numactl --cpubind=1 --membind=1 zip_sva_perf -b 8192 -s 8192000000 -o perf
+
+Tracing... Hit Ctrl-C to end.
+io pf duration dist:
+cpu pf duration dist:
+     nsecs               : count     distribution
+         0 -> 1          : 0        |                                        |
+         2 -> 3          : 0        |                                        |
+         4 -> 7          : 0        |                                        |
+         8 -> 15         : 0        |                                        |
+        16 -> 31         : 0        |                                        |
+        32 -> 63         : 0        |                                        |
+        64 -> 127        : 0        |                                        |
+       128 -> 255        : 0        |                                        |
+       256 -> 511        : 0        |                                        |
+       512 -> 1023       : 0        |                                        |
+      1024 -> 2047       : 29245    |***********                             |
+      2048 -> 4095       : 67623    |**************************              |
+      4096 -> 8191       : 23610    |*********                               |
+      8192 -> 16383      : 2609     |*                                       |
+     16384 -> 32767      : 492      |                                        |
+     32768 -> 65535      : 215      |                                        |
+     65536 -> 131071     : 70       |                                        |
+    131072 -> 262143     : 90       |                                        |
+    262144 -> 524287     : 144      |                                        |
+    524288 -> 1048575    : 20740    |********                                |
+   1048576 -> 2097151    : 101646   |****************************************|
+
+Compress bz=8192 nb=1×1000000, speed=842.5 MB/s (±0.0% N=1) overall=147.8 MB/s (±0.0%)
+
+结论: 对比相同没有噪声的场景，性能大幅下降。这个测试场景中，预先分配zip使用的
+      内存，分配得到的是小页。背景噪声持续构造THP大页，对于SVA小页的影响是很大的。
+
+      但是有一点解释不通，zip sva测试程序中尽然没有iopf的统计?!
+
